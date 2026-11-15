@@ -431,7 +431,7 @@ body.journey .brand .sub { display: none; }
 .pin.open .pin-dot { background: var(--amber); color: #2a1a08; }
 .pin.done .pin-dot { background: var(--ok); }
 .pin.soon .pin-dot, .pin.locked .pin-dot { background: #8d8072; opacity: .8; }
-.pin.rest .pin-dot, .pin.summit .pin-dot { font-size: 18px; }
+.pin.rest .pin-dot, .pin.summit .pin-dot, .pin.story .pin-dot { font-size: 18px; }
 .pin.next .pin-dot { animation: pinpulse 1.4s ease-in-out infinite; }
 @keyframes pinpulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(240,160,32,.9), 0 3px 8px rgba(0,0,0,.45); } 60% { box-shadow: 0 0 0 14px rgba(240,160,32,0), 0 3px 8px rgba(0,0,0,.45); } }
 .pin-tag { position: absolute; left: 50%; bottom: calc(100% + 6px); transform: translateX(-50%); background: rgba(250,240,214,.97); border: 1.5px solid #8a6a3a; border-radius: 9px; padding: 3px 9px; white-space: nowrap; display: none; flex-direction: column; align-items: center; font-size: 13px; pointer-events: none; }
@@ -665,17 +665,19 @@ table.inner td { border: 0; padding: 1px 6px 1px 0; }
 @media (max-width: 1250px) { body.journey .tiers button span { display: none; } #jchip .ftag { max-width: 150px; overflow: hidden; text-overflow: ellipsis; } }
 
 /* ---- a fork in the trail (two routes for one obstacle) ---- */
-.routes { display: grid; grid-template-columns: 1fr; gap: 10px; margin: 12px 0 4px; }
-.route { display: flex; flex-direction: row; align-items: stretch; text-align: left; padding: 0; border: 2px solid #b79a66; border-radius: 12px; overflow: hidden; background: #fbf3df; cursor: pointer; font: inherit; color: inherit; transition: transform .15s, box-shadow .15s; }
-.route:hover, .route:focus-visible { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(60, 40, 10, .25); border-color: #7a5a2e; }
-.route img { width: 34%; min-width: 96px; max-width: 170px; object-fit: cover; display: block; }
-.route-body { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px 12px; }
-.route-body b { font-size: 1.15em; }
-.route-body > span { color: #6b5a40; font-size: .9em; }
-.route-body i { font-style: normal; }
-.route-body em { font-style: normal; font-weight: 700; color: #7a5a2e; margin-top: 4px; }
-.route.done { border-color: #4f8a3a; }
-.route.done em { color: #2f6b22; }
+.looks { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin: 6px 0 12px; }
+.look { display: flex; flex-direction: column; border: 2px solid #b79a66; border-radius: 12px; overflow: hidden; background: #fbf3df; }
+.look img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block; }
+.look > span { display: flex; flex-direction: column; gap: 2px; padding: 7px 10px 9px; font-size: .92em; line-height: 1.3; color: #6b5a40; }
+.look > span b { color: #2a1a08; font-size: 1.05em; }
+.look.done { border-color: #4f8a3a; }
+.looks > p { grid-column: 1 / -1; margin: 0; }
+.look.tool { flex-direction: row; align-items: center; gap: 4px; padding: 6px 4px 6px 10px; }
+.look.tool svg, .look.tool .ic { flex: none; }
+.look.tool .ic { font-size: 30px; width: 40px; text-align: center; }
+.look.tool > span { padding: 4px 6px; }
+.jx-scene .problem .reflect { display: flex; flex-direction: column; gap: 4px; margin: 6px 0 4px; }
+.jx-scene .problem textarea { width: 100%; box-sizing: border-box; font: inherit; border: 1.5px solid #c9a86a; border-radius: 8px; padding: 6px 8px; background: #fff; }
 
 /* ---- point B: the summit ---- */
 .trip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 12px 0; }
@@ -844,7 +846,7 @@ input[type="range"] { accent-color: var(--amber, #e0a12a); }
 /* small maps (phones): smaller pins so neighbouring stops don't sit on top of each other */
 @media (max-width: 600px) {
   .pin-dot { width: 22px; height: 22px; font-size: 11.5px; border-width: 2px; }
-  .pin.rest .pin-dot, .pin.summit .pin-dot { font-size: 12px; }
+  .pin.rest .pin-dot, .pin.summit .pin-dot, .pin.story .pin-dot { font-size: 12px; }
   .pin-tag { font-size: 11.5px; padding: 2px 7px; }
   .pin-tag i { font-size: 10.5px; }
 }
@@ -6053,6 +6055,10 @@ function declutterLabels(dt) {
   const PAD = 3;
   const box = layer.getBoundingClientRect();
   els.forEach((e) => {
+    // a label poking a little past the left or right edge (narrow phones) slides back inside; one far off-screen stays put
+    const w = e.r - e.l, lo = box.left + 4, hi = box.right - 4;
+    const dx = w > hi - lo ? 0 : e.l < lo && e.r > lo + w / 2 ? lo - e.l : e.r > hi && e.l < hi - w / 2 ? hi - e.r : 0;
+    if (dx) { e.l += dx; e.r += dx; e.el.style.transform += ` translateX(${dx.toFixed(1)}px)`; }
     // the smallest up/down move that clears every label already placed (and, if possible, stays inside the view)
     const fits = (o) => !placed.some((q) => e.l < q.r + PAD && e.r > q.l - PAD && e.t + o < q.b + PAD && e.b + o > q.t - PAD);
     const inView = (o) => e.t + o >= box.top + 2 && e.b + o <= box.bottom - 2;
