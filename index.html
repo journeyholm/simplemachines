@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ogg &amp; Ugg's Machine Lab</title>
+<meta name="description" content="Build simple machines from sticks, stones, and vines. A 3D simple machines game for grades 3 to college.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --ink: #3b2a17; --parch: #f6e7c5; --edge: #b89a68; --go: #d9822b; --ok: #3f7d2c; --bad: #a33; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body { font-family: Nunito, system-ui, sans-serif; color: var(--ink); background: #2a1d10 radial-gradient(ellipse at 50% 0%, #6b4a26 0%, #2a1d10 70%) fixed; display: grid; place-items: center; min-height: 100vh; padding: 16px; }
+  .card { width: min(460px, 100%); background: var(--parch); border: 3px solid var(--edge); border-radius: 18px; padding: 26px 26px 22px; box-shadow: 0 20px 60px rgba(0,0,0,.5); text-align: center; }
+  .logo { font-size: 46px; line-height: 1; }
+  h1 { font-family: 'Patrick Hand', cursive; font-weight: 400; font-size: 40px; margin: 6px 0 0; line-height: 1.05; }
+  .sub { margin: 4px 0 18px; opacity: .8; }
+  form { display: flex; gap: 8px; }
+  input { flex: 1; min-width: 0; font: inherit; font-size: 18px; padding: 10px 12px; border: 2px solid var(--edge); border-radius: 10px; background: #fffaf0; color: var(--ink); }
+  button { font: inherit; font-weight: 800; border-radius: 10px; cursor: pointer; }
+  .go { background: var(--go); color: #fff; border: 0; padding: 10px 16px; font-size: 17px; }
+  .go:disabled { opacity: .6; cursor: wait; }
+  .msg { min-height: 1.4em; margin: 8px 0 4px; font-weight: 700; }
+  .msg.bad { color: var(--bad); } .msg.ok { color: var(--ok); }
+  .or { display: flex; align-items: center; gap: 10px; margin: 10px 0; opacity: .6; font-size: 14px; }
+  .or::before, .or::after { content: ''; flex: 1; border-top: 1px solid var(--edge); }
+  .try { width: 100%; background: transparent; border: 2px solid var(--ink); color: var(--ink); padding: 11px; font-size: 17px; }
+  .try:hover { background: rgba(0,0,0,.06); }
+  .try small { display: block; font-weight: 600; opacity: .75; font-size: 13px; }
+  .note { font-size: 13px; opacity: .75; margin: 16px 0 0; }
+  .load { display: none; }
+  body.busy .card > :not(.load) { display: none; }
+  body.busy .load { display: block; font-size: 18px; font-weight: 700; padding: 20px 0; }
+  .bar { height: 10px; background: #e5d2a8; border-radius: 99px; overflow: hidden; margin-top: 12px; }
+  .bar i { display: block; height: 100%; width: 0; background: var(--go); transition: width .2s; }
+  noscript { display: block; margin-top: 12px; color: var(--bad); font-weight: 700; }
+</style>
+</head>
+<body>
+<main class="card">
+  <div class="logo" aria-hidden="true">🦴</div>
+  <h1>Ogg &amp; Ugg's Machine Lab</h1>
+  <p class="sub">The 500 lb Prehistoric Problem</p>
+  <form id="f" autocomplete="off">
+    <label for="pw" style="position:absolute;left:-9999px">Password</label>
+    <input id="pw" type="password" placeholder="Password" autocapitalize="off" spellcheck="false" autofocus>
+    <button class="go" id="go">🔓 Play</button>
+  </form>
+  <div class="msg" id="msg" role="status"></div>
+  <div class="or">no password yet?</div>
+  <button class="try" id="try">▶ Try the free preview<small>Build a lever and a ramp in 3D</small></button>
+  <p class="note">Teachers: the password is in your teacher guide. Each device remembers it after the first time.</p>
+  <noscript>This game needs JavaScript turned on.</noscript>
+  <div class="load" id="load"><span id="loadTxt">Loading the game…</span><div class="bar"><i id="bar"></i></div></div>
+</main>
+<script>
+(() => {
+  const SALT = '8349dc5bec1c6a8ec7254562c5a7d852', ITER = 300000, KEY = 'ml-unlock';
+  const $ = (id) => document.getElementById(id);
+  const hex = (b) => Array.from(new Uint8Array(b), (x) => x.toString(16).padStart(2, '0')).join('');
+  const unhex = (h) => new Uint8Array(h.match(/../g).map((x) => parseInt(x, 16)));
+  const store = {
+    get() { try { return localStorage.getItem(KEY); } catch (e) { return null; } },
+    set(v) { try { v ? localStorage.setItem(KEY, v) : localStorage.removeItem(KEY); } catch (e) { /* private window: unlock lasts this visit only */ } },
+  };
+  const ok = !!(window.crypto && crypto.subtle && window.DecompressionStream && window.fetch);
+
+  async function derive(pw) {
+    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw.trim().toLowerCase()), 'PBKDF2', false, ['deriveBits']);
+    return hex(await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: unhex(SALT), iterations: ITER, hash: 'SHA-256' }, base, 384));
+  }
+  let gameBuf = null;
+  async function download(file) {
+    const r = await fetch(file, { cache: 'no-cache' });
+    if (!r.ok) throw new Error('missing ' + file);
+    const total = +r.headers.get('content-length') || 0;
+    if (!total || !r.body) return r.arrayBuffer();
+    const rd = r.body.getReader(), parts = [];
+    let got = 0;
+    for (;;) {
+      const { done, value } = await rd.read();
+      if (done) break;
+      parts.push(value); got += value.length;
+      const bar = $('bar');   // gone once the preview has replaced this page (its Unlock box downloads the game too)
+      if (bar) bar.style.width = Math.min(100, (100 * got) / total) + '%';
+    }
+    return new Blob(parts).arrayBuffer();
+  }
+  async function decrypt(k) {
+    const kb = unhex(k);
+    if (!gameBuf) gameBuf = await download('game.bin');
+    const key = await crypto.subtle.importKey('raw', kb.slice(0, 32), 'AES-CBC', false, ['decrypt']);
+    const plain = await crypto.subtle.decrypt({ name: 'AES-CBC', iv: kb.slice(32) }, key, gameBuf);
+    const html = await new Response(new Blob([plain]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
+    if (!/^<!doctype html>/i.test(html)) throw new Error('bad password');
+    return html;
+  }
+  function show(html) { document.open(); document.write(html); document.close(); }
+  function busy(on, txt) { document.body.classList.toggle('busy', on); if (txt && $('loadTxt')) $('loadTxt').textContent = txt; }
+
+  // used by the gate form and by the "Unlock" box inside the free preview
+  window.MLUnlock = async (pw) => {
+    try { const k = await derive(pw); await decrypt(k); store.set(k); return true; } catch (e) { return false; }
+  };
+
+  async function start() {
+    const q = new URLSearchParams(location.search);
+    if (q.has('lock')) { store.set(null); history.replaceState(null, '', location.pathname); }
+    // a class link can carry the password after #pw= (the part after # never leaves the device)
+    const m = /^#pw=(.+)$/.exec(location.hash);
+    if (m) {
+      history.replaceState(null, '', location.pathname);
+      if (ok) {
+        busy(true, 'Unlocking…');
+        try { const k = await derive(decodeURIComponent(m[1])); show(await decrypt(k)); store.set(k); return; } catch (e) { busy(false); }
+      }
+    }
+    if (q.has('preview')) return preview();
+    const k = store.get();
+    if (k && ok) {
+      busy(true, 'Loading the game…');
+      try { show(await decrypt(k)); return; } catch (e) { store.set(null); busy(false); }
+    }
+    if (!ok) msg('This browser is too old for the game. Please update it (Chrome, Edge, Safari 16.4+, or Firefox).', 'bad');
+  }
+  async function preview() {
+    busy(true, 'Loading the free preview…');
+    try { show(new TextDecoder().decode(await download('preview.html'))); } catch (e) { busy(false); msg('Could not load the preview. Check your internet connection.', 'bad'); }
+  }
+  function msg(t, cls) { const el = $('msg'); if (!el) return; el.textContent = t; el.className = 'msg ' + (cls || ''); }
+
+  $('f').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const pw = $('pw').value;
+    if (!pw.trim()) { msg('Type the password, or try the free preview below.', 'bad'); return; }
+    $('go').disabled = true;
+    msg('Checking…');
+    try {
+      const k = await derive(pw);
+      busy(true, 'Loading the game…');
+      const html = await decrypt(k);
+      store.set(k);
+      show(html);
+    } catch (err) {
+      busy(false);
+      $('go').disabled = false;
+      msg(/missing|fetch/i.test(String(err && err.message)) ? 'Could not download the game. Check your internet connection.' : 'That password didn\'t work. Check the spelling and try again.', 'bad');
+      $('pw').select();
+    }
+  });
+  $('try').addEventListener('click', preview);
+  addEventListener('hashchange', () => { if (/^#pw=/.test(location.hash)) start(); });
+  start();
+})();
+</script>
+</body>
+</html>
