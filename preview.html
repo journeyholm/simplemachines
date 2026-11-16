@@ -1551,7 +1551,23 @@ PP.treeRoots = function (x, y, z, r, seed = 1) {
 };
 
 /** Lumpy low-poly stone. size = [sx, sy, sz] */
+// A stone's shape depends only on its arguments, and a dressed set builds hundreds of them (the landslide: ~300,
+// ~28 ms) on every rebuild, i.e. every resize step. Build each shape once and share it (disposeTree skips shared ones).
+const STONE_CACHE = new Map();
 PP.makeStone = function (sx = 1, sy = 0.8, sz = 0.9, seed = 1, tint = 0, lum = 0) {
+  const key = sx + '|' + sy + '|' + sz + '|' + seed + '|' + tint + '|' + lum;
+  let shared = STONE_CACHE.get(key);
+  if (!shared) {
+    shared = stoneGeo(sx, sy, sz, seed, tint, lum);
+    shared.userData.shared = true;
+    if (STONE_CACHE.size > 4000) STONE_CACHE.clear();      // a safety valve; real sets use a few hundred shapes
+    STONE_CACHE.set(key, shared);
+  }
+  const m = new THREE.Mesh(shared, MAT.stone);
+  m.castShadow = m.receiveShadow = true;
+  return m;
+};
+function stoneGeo(sx, sy, sz, seed, tint, lum) {
   const geo = new THREE.IcosahedronGeometry(1, 2);
   const p = geo.attributes.position;
   const col = [];
@@ -1568,10 +1584,8 @@ PP.makeStone = function (sx = 1, sy = 0.8, sz = 0.9, seed = 1, tint = 0, lum = 0
   }
   geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
   geo.computeVertexNormals();
-  const m = new THREE.Mesh(geo, MAT.stone);
-  m.castShadow = m.receiveShadow = true;
-  return m;
-};
+  return geo;
+}
 
 /** A straight vine/rope segment that can be re-aimed each frame. */
 PP.Rope = class {
@@ -3061,6 +3075,10 @@ PP.initWorld = function (container) {
     const hits = ray.intersectObjects(pickables, true);
     for (const h of hits) {
       let o = h.object;
+      // three.js raycasts hidden objects too: a hidden arrow or grip must not be grabbable
+      let shown = true;
+      for (let q = o; q; q = q.parent) if (!q.visible) { shown = false; break; }
+      if (!shown) continue;
       while (o && !o.userData.handle) o = o.parent;
       if (o) return { handle: o.userData.handle, point: h.point };
     }
@@ -3116,19 +3134,23 @@ PP.rayPlane = function (ray, point, normal) {
 /** Tracks continuous rotation of the pointer around a centre (unwrapped). */
 PP.AngleTracker = class {
   start(angle) { this.last = angle; }
-  delta(angle) {
+  /** Signed turn since the last call. Pass the cursor's distance from the pivot (r) and the
+   *  smallest distance that still means something (rMin): near the pivot a tiny mouse move is
+   *  a huge angle, so those moves are ignored, and no single move may turn more than ~30°. */
+  delta(angle, r, rMin) {
+    if (r != null && rMin != null && r < rMin) { this.last = angle; return 0; }   // too close to the pivot: no turn until the cursor comes back out
     let d = angle - this.last;
     while (d > Math.PI) d -= 2 * Math.PI;
     while (d < -Math.PI) d += 2 * Math.PI;
     this.last = angle;
-    return d;
+    return Math.max(-0.5, Math.min(0.5, d));
   }
 };
 
 /** Dispose a group tree (geometries only; materials are shared). */
 PP.disposeTree = function (obj) {
   obj.traverse((o) => {
-    if (o.geometry) o.geometry.dispose();
+    if (o.geometry && !(o.geometry.userData && o.geometry.userData.shared)) o.geometry.dispose();
     if (o.isCSS2DObject && o.element && o.element.parentNode) o.element.parentNode.removeChild(o.element);
   });
 };
@@ -3209,6 +3231,7 @@ function geom(P) {
 
 PP.register({
   id: 'lever',
+  absDrag: true,   // onDrag maps the cursor straight to a spot on the track (ui.js drags relative to the grab point)
   name: 'Lever',
   homeK: 1,
   icon: '<svg viewBox="0 0 48 48"><path d="M4 30 L44 18" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><path d="M20 38 L26 25 L32 38 Z" fill="currentColor"/><circle cx="8" cy="22" r="5" fill="currentColor"/></svg>',
@@ -3535,6 +3558,7 @@ function geom(P) {
 
 PP.register({
   id: 'ramp',
+  absDrag: true,   // onDrag maps the cursor straight to a spot on the track (ui.js drags relative to the grab point)
   name: 'Inclined Plane',
   icon: '<svg viewBox="0 0 48 48"><path d="M4 40 L44 40 L44 14 Z" fill="currentColor"/><rect x="16" y="22" width="9" height="9" transform="rotate(-33 20 27)" fill="#fff8e6" stroke="currentColor" stroke-width="2"/></svg>',
   loadLabel: 'Load (weight)',
@@ -4593,12 +4617,21 @@ function updateSizers() {
   specs.forEach((sp, i) => {
     const h = sizeHandles[i];
     if (!h) return;
-    h.visible = show && !sp.hidden;
-    if (!show || sp.hidden) return;
+    const locked = sizeLocked(sp.key);      // a size this obstacle fixes gets no arrow: dragging it would do nothing
+    const on = show && !sp.hidden && !locked;
+    h.visible = on;
+    if (!on) return;
     const key = 'size:' + sp.key;
     const hinted = S.hint && S.hint.key === sp.key && !S.sizing && Math.sin(S.t * 7) > 0;
     h.set(up(sp.at), sp.dir, sp.text, camera, hov === key || (S.sizing && S.sizing.key === sp.key) || hinted);
   });
+}
+/** True when the current obstacle pins this size (fixed value, or min = max), so it can't be dragged. */
+function sizeLocked(key) {
+  const jo = jParam(key);
+  if (jo && jo.fixed != null) return true;
+  const meta = paramMeta(key);
+  return !meta || !(meta.max > meta.min);
 }
 function paramMeta(key) {
   const pr = M().params.find((q) => q.key === key);
@@ -4614,7 +4647,7 @@ function startSizing(key, ray) {
   const m = M();
   const sp = (m.sizers(S.calc, ctx()) || []).find((q) => q.key === key);
   const meta = paramMeta(key);
-  if (!sp || !meta) return;
+  if (!sp || !meta || sizeLocked(key)) return;
   const dir = sp.dir.clone().normalize();
   const cd = camera.getWorldDirection(V());
   const n = cd.clone().addScaledVector(dir, -cd.dot(dir));
@@ -4622,7 +4655,15 @@ function startSizing(key, ray) {
   n.normalize();
   const q0 = PP.rayPlane(ray, sp.at, n);
   if (!q0) return;
-  S.sizing = { key, dir, n, at: sp.at.clone(), q0, start: +P()[key], perFt: sp.perFt || 1, meta };
+  // every step of the value should take at least a few pixels of mouse travel, however small the part
+  // looks on screen (a quarter inch of wedge was under one pixel): slow the drag down when it would be twitchy
+  const pa = sp.at.clone().project(camera), pb = sp.at.clone().add(dir).project(camera);
+  const cv = world.renderer.domElement;
+  const pxPerFt = Math.hypot((pb.x - pa.x) * cv.clientWidth / 2, (pb.y - pa.y) * cv.clientHeight / 2);
+  const MIN_PX = 7;
+  let perFt = sp.perFt || 1;
+  if (pxPerFt > 1 && meta.step > 0) perFt = Math.min(perFt, (pxPerFt * meta.step) / MIN_PX);
+  S.sizing = { key, dir, n, at: sp.at.clone(), q0, start: +P()[key], perFt, meta };
   setAuto(false);
   sfx('tick');
 }
@@ -4644,6 +4685,7 @@ function dragSizing(ray) {
 
 // --------------------------------------------------------- build/rebuild
 let liveRoot = null;
+let faunaSet = {};
 function rebuild(keepCam) {
   const m = M();
   if (liveRoot) { scene.remove(liveRoot); PP.disposeTree(liveRoot); liveRoot = null; }
@@ -4683,7 +4725,12 @@ function rebuild(keepCam) {
     PP.setGrassHoles(holes);
   }
   try { scatterClutter(holes); } catch (e) { console.warn('clutter', e); }
-  if (PP.fauna) PP.fauna.place(scene, homePos(), homeTarget(), J, camera);   // mammoths on the far hills
+  // mammoths on the far hills: placed once per set. Re-placing them costs up to ~180 ms of sight-line
+  // raycasts and moves the herd somewhere new, so a resize (same machine, same place) leaves them alone.
+  if (PP.fauna && (!keepCam || faunaSet.mi !== S.mi || faunaSet.J !== J || faunaSet.tier !== S.tier)) {
+    faunaSet = { mi: S.mi, J, tier: S.tier };
+    PP.fauna.place(scene, homePos(), homeTarget(), J, camera);
+  }
   PP.addBumps(scene);    // bark, rock, dirt and fur get surface relief (new materials only; cheap after the first time)
 }
 // ------------------------------------------------- ground clutter
@@ -4895,6 +4942,15 @@ world.onGrab = (handle, ray, pt) => {
   stopSpin();
   if (handle.startsWith('size:')) { startSizing(handle.slice(5), ray); return; }
   const m = M(); m.onGrab && m.onGrab(handle, ray, pt, st());
+  // machines that map the cursor straight to a spot on the track (lever, ramp, cart) would make the load
+  // jump if the grip isn't grabbed dead centre: remember that offset and drag relative to it
+  S.dragOff = 0;
+  if (m.absDrag) {
+    const s0 = st(), low = JX() && JX().lower;
+    if (low) s0.p = 1 - s0.p;
+    const np = m.onDrag(handle, ray, s0);
+    if (np != null && isFinite(np)) S.dragOff = np - s0.p;
+  }
 };
 world.onDrag = (handle, ray) => {
   if (handle.startsWith('size:')) { if (S.sizing) dragSizing(ray); return; }
@@ -4902,10 +4958,11 @@ world.onDrag = (handle, ray) => {
   const low = JX() && JX().lower;
   if (low) s0.p = 1 - s0.p;
   let np = M().onDrag(handle, ray, s0);
+  if (np != null && M().absDrag) np -= S.dragOff || 0;
   if (low && np != null) np = 1 - np;
   if (np != null && isFinite(np)) tryMove(np);
 };
-world.onRelease = () => { S.sizing = null; };
+world.onRelease = () => { S.sizing = null; S.dragOff = 0; };
 world.onUserCamera = () => { stopSpin(); endIntro(); };
 
 // ----------------------------------------------------------- build mode
