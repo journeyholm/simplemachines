@@ -91,7 +91,7 @@ body.building #blurb { display: none; }
 #blurb.min p, #blurb.min .ex { display: none; }
 
 #status {
-  position: absolute; left: 50%; bottom: 80px; transform: translateX(-50%); z-index: 3;
+  position: absolute; left: 50%; bottom: calc(var(--barH, 45px) + 22px); transform: translateX(-50%); z-index: 3;
   background: rgba(40, 28, 14, .88); color: #fff3d6; padding: 8px 16px; border-radius: 999px; font-weight: 700; font-size: 15px;
   max-width: min(560px, 90%); text-align: center; transition: background .2s; pointer-events: none;
 }
@@ -143,6 +143,7 @@ body.building #blurb { display: none; }
 #inset.closed { width: auto; border-width: 2px; }
 #inset.closed #insetView, #inset.closed #insetCap { display: none; }
 @media (max-width: 600px) { #inset { width: 150px; right: 8px; top: 8px; } #insetView { height: 92px; } #insetCap { font-size: 11px; } }
+#camPad[hidden], #inset[hidden], #blurb[hidden], #viewBar button[hidden] { display: none !important; }
 #camPad { position: absolute; right: 14px; bottom: 74px; z-index: 3; padding: 6px; background: rgba(40, 28, 14, .8); width: 138px; }
 #camPad .cp-title { color: #f6e7c5; font-weight: 800; font-size: 12px; text-align: center; margin: -1px 0 5px; letter-spacing: .04em; }
 #camPad .cp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
@@ -304,7 +305,7 @@ body.cine #stage > :not(#canvas):not(#cine), body.cine .label-layer, body.cine #
   #top { flex-wrap: wrap; padding: 8px 12px; gap: 8px; }
   .tiers { margin-left: 0; order: 3; width: 100%; }
   .tcards { grid-template-columns: 1fr 1fr; }
-  #camPad { bottom: auto; top: 14px; right: auto; left: 14px; display: none; }
+  #camPad { bottom: auto; top: 14px; right: auto; left: 14px; }
   .tiers button { flex: 1; padding: 4px 6px; }
   #machines { flex-direction: row; overflow-x: auto; padding: 8px; }
   #machines button { min-width: 78px; }
@@ -384,7 +385,9 @@ body.journey .brand .sub { display: none; }
 .jx-card.narrow { max-width: 760px; margin: 0 auto; }
 .jx-actions { display: flex; gap: 10px; justify-content: flex-end; align-items: center; flex-wrap: wrap; margin-top: 14px; }
 /* the next-step buttons stay on screen while a long card scrolls */
-.jx-card.parchment > .jx-actions { position: sticky; bottom: 0; z-index: 3; margin: 14px -24px -20px; padding: 14px 24px 16px; background: linear-gradient(rgba(239,223,184,0), #efdfb8 34%); border-radius: 0 0 14px 14px; }
+.jx-card.parchment > .jx-actions { position: sticky; bottom: -40px; z-index: 3; margin: 22px -24px -20px; padding: 12px 24px 56px; background: #efdfb8; border-top: 1px solid rgba(201,168,106,.55); border-radius: 0 0 14px 14px; }
+/* the scroller's 40px bottom padding would leave a gap under a bottom:0 sticky bar, so the bar hangs into it; a soft fade above it hides text sliding under */
+.jx-card.parchment > .jx-actions::before { content: ''; position: absolute; left: 0; right: 0; top: -22px; height: 22px; background: linear-gradient(rgba(239,223,184,0), #efdfb8); pointer-events: none; }
 .jx-actions.left { justify-content: flex-start; }
 .jx button.ghost { border: 2px solid var(--edge); background: #fffaf0; color: var(--ink); border-radius: 10px; padding: 8px 14px; font-weight: 800; }
 .jx button.ghost:hover { background: #fff; }
@@ -783,7 +786,7 @@ body.side-min #side { display: none; }
   #status { font-size: 13px; max-width: calc(100% - 20px); }
   .jx-scroll { padding: 14px 10px 32px; }
   .jx-card { padding: 14px; }
-  .jx-card.parchment > .jx-actions { margin: 14px -14px -14px; padding: 12px 14px 14px; }
+  .jx-card.parchment > .jx-actions { bottom: -32px; margin: 18px -14px -14px; padding: 10px 14px 46px; }
   .qopts.final button { font-size: 1em; }
 }
 .factcard { background: #fff6dc; border: 1.5px dashed #c9a86a; border-radius: 10px; padding: 8px 10px; margin: 8px 0; font-size: 13.5px; line-height: 1.4; }
@@ -858,6 +861,42 @@ body.readaloud #status, body.readaloud .story, body.readaloud #coach p { cursor:
 body.readaloud #side p:hover, body.readaloud #side li:hover, body.readaloud .story:hover, body.readaloud #status:hover { text-decoration: underline dotted rgba(80,50,20,.5); text-underline-offset: 3px; }
 #readBtn[aria-pressed="true"] { background: var(--go, #d9822b); color: #fff; border-color: transparent; }
 
+/* smaller screens: the view toggles shrink to their icons (names stay in the tooltips) so the bar fits in one row */
+@media (max-width: 1280px) { #viewBar .toggle span { display: none; } #viewBar .toggle { padding: 7px 9px; font-size: 15px; } }
+#viewBar.compact .toggle span { display: none; }
+#viewBar.compact .toggle { padding: 7px 9px; font-size: 15px; }
+@media (max-width: 600px) { #viewBar #auto span, #viewBar #reset span, #viewBar #rebuild span { display: none; } }
+
+/* mission steps in the side panel: what to do right now */
+#hud .msteps { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 3px; }
+#hud .msteps li { display: flex; gap: 7px; align-items: flex-start; font-size: 13px; line-height: 1.3; padding: 3px 6px; border-radius: 8px; color: var(--ink-soft); }
+#hud .msteps li > b { flex: none; width: 20px; height: 20px; border-radius: 50%; background: #e7d5ad; color: var(--ink); font-size: 12px; display: grid; place-items: center; }
+#hud .msteps li.ok { opacity: .7; }
+#hud .msteps li.ok > b { background: #2f8a49; color: #fff; }
+#hud .msteps li.now { background: #fff1c9; border: 2px solid #f0a92a; color: var(--ink); font-weight: 700; }
+#hud .msteps li.now > b { background: #f0a92a; color: #fff; }
+#hud .msteps em { display: block; font-style: normal; font-weight: 500; font-size: 12.5px; margin-top: 2px; }
+#hud .msteps em .blue, #hud .msteps .blue { color: #1b8fb3; }
+#hud .hudmsg { margin: 6px 0 2px; padding: 5px 8px; border-radius: 8px; font-size: 13px; font-weight: 700; background: #efe2c2; }
+#hud .hudmsg.bad { background: #f7d6cf; color: #8a1f12; }
+#hud .hudmsg.good { background: #d5efd9; color: #1d6232; }
+#coach.brief { width: min(540px, calc(100% - 24px)); max-height: calc(100% - 90px); overflow: auto; }
+#coach.brief p { margin: 0 0 7px; line-height: 1.35; }
+#coach.brief .bgoal { background: #fff6dc; border: 1px dashed #c9a86a; border-radius: 8px; padding: 6px 9px; }
+#coach.brief .blearn { background: #e3f0f5; border-radius: 8px; padding: 6px 9px; }
+#coach.brief ol li { margin-bottom: 3px; }
+#coach .blue { color: #1b8fb3; }
+#coach .orange { color: #c77800; }
+#coach .row { display: flex; justify-content: flex-end; }
+/* the mission card is the only thing on screen until Start: no build tray, labels, or messages behind it */
+#briefBack { position: absolute; inset: 0; z-index: 29; background: rgba(25, 15, 5, .45); }
+#coach.brief { top: 50%; transform: translate(-50%, -50%); width: min(480px, calc(100% - 24px)); font-size: 15.5px; }
+#coach.brief h3 { font-size: 26px; }
+#stage:has(#briefBack) #buildTray, #stage:has(#briefBack) .label-layer, #stage:has(#briefBack) #status, #stage:has(#briefBack) #viewBar { visibility: hidden; }
+body.cine #briefBack { display: none; }
+#glLost { position: absolute; z-index: 40; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(380px, calc(100% - 24px)); padding: 14px 16px; text-align: center; }
+#glLost h3 { font-family: var(--hand); font-weight: 400; font-size: 24px; margin: 0 0 6px; }
+
 </style>
   <script type="importmap">
   {
@@ -929,7 +968,7 @@ body.readaloud #side p:hover, body.readaloud #side li:hover, body.readaloud .sto
         <div id="insetView"><canvas id="insetCanvas"></canvas></div>
         <div id="insetCap"></div>
       </div>
-      <div id="camPad" class="card" aria-label="Camera">
+      <div id="camPad" class="card" aria-label="Camera" hidden>
         <div class="cp-title">🎥 Camera</div>
         <div class="cp-grid">
           <button data-cam="left" title="Orbit left (Q)">⟲</button>
@@ -945,16 +984,18 @@ body.readaloud #side p:hover, body.readaloud #side li:hover, body.readaloud .sto
         <button id="camSpin" class="wide" title="Turntable: spin all the way around">🔄 Spin 360°</button>
       </div>
       <div id="viewBar">
-        <button id="tDims" class="toggle on" title="Show measurements">📏 Measure</button>
-        <button id="tForces" class="toggle on" title="Show force arrows">➜ Forces</button>
-        <button id="tSize" class="toggle on" title="Show the blue resize arrows">✥ Resize</button>
-        <button id="tGraph" class="toggle" title="Live graph: see how the math changes as you resize the machine">📈 Graph</button>
-        <button id="tAlpha" class="ghostbtn" title="Make the info panels see-through">◧ Panels</button>
+        <button id="tDims" aria-label="Measure" class="toggle" title="Show or hide measurements">📏<span> Measure</span></button>
+        <button id="tForces" aria-label="Forces" class="toggle" title="Show or hide force arrows">➜<span> Forces</span></button>
+        <button id="tText" aria-label="Text on the scene" class="toggle" title="Show or hide the words on the scene (tips, labels, messages)">💬<span> Text</span></button>
+        <button id="tSize" aria-label="Resize arrows" class="toggle on" title="Show or hide the blue resize arrows">✥<span> Resize</span></button>
+        <button id="tInset" aria-label="Close-up" class="toggle" title="Show or hide a close-up of the part that sets the math" hidden>🔍<span> Close-up</span></button>
+        <button id="tGraph" aria-label="Graph" class="toggle" title="Live graph: see how the math changes as you resize the machine">📈<span> Graph</span></button>
+        <button id="tCam" aria-label="Camera buttons" class="toggle" title="Show or hide the camera buttons">🎥<span> Camera</span></button>
         <span class="sep"></span>
         <span id="actions"></span>
-        <button id="auto" title="Let the hunters work by themselves">▶ Auto</button>
-        <button id="reset" title="Put the load back">↺ Reset</button>
-        <button id="rebuild" title="Build this machine again">🔨 Build</button>
+        <button id="auto" title="Let the hunters work by themselves">▶<span> Auto</span></button>
+        <button id="reset" aria-label="Reset" title="Put the load back">↺<span> Reset</span></button>
+        <button id="rebuild" aria-label="Build" title="Build this machine again">🔨<span> Build</span></button>
       </div>
     </main>
 
@@ -973,13 +1014,13 @@ body.readaloud #side p:hover, body.readaloud #side li:hover, body.readaloud .sto
         <li><b>Pick a machine</b> on the left. There are six simple machines, plus two that put them to work: the <b>Cart</b> (wheels &amp; axles beat friction) and the <b>Raft Clamp</b> (a screw that holds things tight).</li>
         <li><b>Build it</b> from the materials pile: stones, logs, and vines. A glowing outline shows where each part goes.</li>
         <li><b>Drag the orange ✋ orb</b> to push, pull, crank, or turn the machine.</li>
-        <li><b>Drag the blue ↔ arrows</b> (or use the sliders) to resize parts. The math updates instantly.</li>
+        <li><b>Drag the blue ↔ arrows</b> to resize parts: press near the arrow and slide along it (you don't have to hit it exactly). Or use the <b>+ / −</b> buttons in Machine specs. The math updates instantly.</li>
         <li>If the hunters can't push hard enough, the load <b>won't budge</b>. Get more mechanical advantage!</li>
         <li>Check the <b>Engineering Log</b> to see the math, or choose <i>I'll solve it</i> and do it yourself.</li>
         <li>Press <b>📈 Graph</b> to watch the math change live: the curve shows every size you could pick, the orange dot is <i>your</i> machine, and the green zone is "strong enough".</li>
-        <li>Info boxes in the way? Drag their titles to move them (double-click a title to put it back), drag the corner to resize, or press <b>◧</b> to make them see-through.</li>
+        <li>The buttons under the machine turn extras on and off: <b>📏 Measure</b> (sizes), <b>➜ Forces</b> (force arrows), <b>💬 Text</b> (tips and messages on the scene), <b>✥ Resize</b> (blue arrows), <b>🔍 Close-up</b>, <b>📈 Graph</b>, and <b>🎥 Camera</b>. Measurements, forces, text, the close-up, and the camera buttons start off so the scene stays clear. The numbered steps in the side panel always show what to do next. Info boxes in the way? Drag their titles to move them (double-click a title to put it back) or drag the corner to resize.</li>
       </ol>
-      <p class="muted">Camera: drag empty ground to orbit all the way around, scroll or pinch to zoom, right-drag to slide. Use the 🎥 Camera pad for preset views, Q/E to orbit, and 🔄 to spin 360°.</p>
+      <p class="muted">Camera: drag empty ground to orbit all the way around, scroll or pinch to zoom, right-drag to slide. Press 🎥 Camera for preset views and 🔄 Spin 360°, or use Q/E to orbit.</p>
       <button id="helpClose" class="primary">Got it!</button>
     </div>
   </div>
@@ -992,7 +1033,7 @@ body.readaloud #side p:hover, body.readaloud #side li:hover, body.readaloud .sto
       <h2>1 · Choose your level <small>then</small> 2 · Choose where to go</h2>
       <div id="startCards" class="tcards"></div>
       <div id="startModes" class="smodes">
-        <button id="goJourney" class="smode journey"><span class="si">🗺️</span><b>The Journey</b><span>Get the boar home! Story mode: 7 obstacles, one machine at a time.</span></button>
+        <button id="goJourney" class="smode journey"><span class="si">🗺️</span><b>The Journey</b><span>Get the boar home! Story mode: 8 obstacles, one machine at a time.</span></button>
         <button id="goLab" class="smode"><span class="si">🧪</span><b>Machine Lab</b><span>Free play: build, test, and train on all 8 machines.</span></button>
       </div>
       <div class="start-how">
@@ -2118,7 +2159,7 @@ PP.makeHunter = function (variant = 'ogg') {
     let R = null, ru = 0, rw = 0;
     if (st.react) {
       const r = st.react;
-      if (t >= r.t0 + r.dur || t < r.t0 - 30) { if (r.yaw0 != null) g.rotation.y = r.yaw0; if (r.pos0) g.position.copy(r.pos0); st.react = null; }
+      if (t >= r.t0 + r.dur || t < r.t0 - 30) { if (r.yaw0 != null) g.rotation.y = r.yaw0; if (r.off && r.lastSet && g.position.distanceTo(r.lastSet) < 1e-6) g.position.sub(r.off); st.react = null; }
       else if (t >= r.t0) {
         R = r; ru = (t - r.t0) / r.dur;
         rw = sst(0, 0.16, ru) * (1 - sst(0.84, 1, ru));
@@ -2128,13 +2169,21 @@ PP.makeHunter = function (variant = 'ogg') {
           let d = Math.atan2(r.look.x - wp.x, r.look.z - wp.z) - r.yaw0;
           d = Math.atan2(Math.sin(d), Math.cos(d));
           g.rotation.y = r.yaw0 + d * rw;
-          if (r.kind !== 'wipe' && !r.pos0) {        // standing shoulder to shoulder? step apart to face each other
-            r.pos0 = g.position.clone();
+          if (r.kind !== 'wipe' && !r.away) {        // standing shoulder to shoulder? step apart to face each other
             r.away = wp.clone().sub(r.look).setY(0);
             r.step = Math.max(0, (3.8 * s - r.away.length()) / 2);
             r.away.normalize();
+            r.off = new THREE.Vector3();
           }
-          if (r.pos0) g.position.copy(r.pos0).addScaledVector(r.away, r.step * rw);
+          if (r.away) {
+            // the step is an offset on top of wherever the machine puts the hunter this frame (a machine that moves
+            // its crew, like a sliding load, must not make the hunter snap back when the reaction ends)
+            const moved = !r.lastSet || g.position.distanceTo(r.lastSet) > 1e-6;
+            const base = moved ? g.position.clone() : g.position.clone().sub(r.off);
+            r.off.copy(r.away).multiplyScalar(r.step * rw);
+            g.position.copy(base).add(r.off);
+            r.lastSet = g.position.clone();
+          }
         }
       }
     }
@@ -2852,6 +2901,7 @@ PP.Grip = class {
 };
 
 /** Drag-to-resize handle: a blue double arrow that slides along one axis. */
+const SIZE_GLOW = new THREE.Color(0x7fe3ff);
 PP.SizeHandle = class {
   constructor() {
     this.group = new THREE.Group();
@@ -2873,12 +2923,14 @@ PP.SizeHandle = class {
     this.label.center.set(-0.18, 1.25); // sit up and to the right of the handle
     this.group.add(this.label);
   }
-  set(at, dir, text, cam, hot) {
+  /** hot = hovered or being dragged (shows the value label); pulse 0..1 = a gentle glow for the suggested arrow (no label, no blinking) */
+  set(at, dir, text, cam, hot, pulse = 0) {
     this.group.position.copy(at);
     this.axis.quaternion.setFromUnitVectors(UP, dir.clone().normalize());
-    const k = PP.clamp(cam.position.distanceTo(at) * 0.04, 0.5, 3) * (hot ? 1.25 : 1 + Math.sin(performance.now() / 260) * 0.07);
+    const k = PP.clamp(cam.position.distanceTo(at) * 0.05, 0.6, 3.6) * (hot ? 1.25 : 1 + pulse * 0.18 + Math.sin(performance.now() / 260) * 0.05);
     this.axis.scale.setScalar(k);
-    this.mat.color.setHex(hot ? 0xff9d1c : 0x1b8fb3);
+    if (hot) this.mat.color.setHex(0xff9d1c);
+    else this.mat.color.setHex(0x1b8fb3).lerp(SIZE_GLOW, pulse * 0.6);
     if (this.label.userData.text !== text) { this.label.userData.div.innerHTML = text; this.label.userData.text = text; }
     this.label.userData.div.classList.toggle('hot', !!hot);
     this.label.visible = !!hot && this.group.visible; // value pops up on hover / drag
@@ -3082,14 +3134,33 @@ PP.initWorld = function (container) {
       while (o && !o.userData.handle) o = o.parent;
       if (o) return { handle: o.userData.handle, point: h.point };
     }
-    return null;
+    // no exact hit: take the nearest handle within a finger's reach on screen (small parts were hard to grab)
+    const r = renderer.domElement.getBoundingClientRect();
+    const reach = lastTouch ? 46 : 36;
+    let best = null, bd = reach;
+    for (const p of pickables) {
+      let shown = true;
+      for (let q = p; q; q = q.parent) if (!q.visible) { shown = false; break; }
+      if (!shown) continue;
+      let o = p;
+      while (o && !o.userData.handle) o = o.parent;
+      if (!o) continue;
+      const wp = p.getWorldPosition(new THREE.Vector3());
+      const sp = wp.clone().project(camera);
+      if (sp.z > 1) continue;
+      const d = Math.hypot((sp.x - ndc.x) * r.width / 2, (sp.y - ndc.y) * r.height / 2);
+      if (d < bd) { bd = d; best = { handle: o.userData.handle, point: wp }; }
+    }
+    return best;
   }
+  let lastTouch = false;
   world.setPickables = (list) => (pickables = list.filter(Boolean));
   world.onGrab = null; world.onDrag = null; world.onRelease = null; world.onUserCamera = null;
   world.hover = () => hover;
   world.dragging = () => dragging;
   const el = renderer.domElement;
   el.addEventListener('pointerdown', (e) => {
+    lastTouch = e.pointerType === 'touch' || e.pointerType === 'pen';
     setRay(e);
     const h = handleAt();
     if (h) {
@@ -3132,6 +3203,20 @@ PP.rayPlane = function (ray, point, normal) {
 };
 
 /** Tracks continuous rotation of the pointer around a centre (unwrapped). */
+/**
+ * A spin the eye can follow. A screw driven hundreds of turns in a few seconds would whirl the hunters around it
+ * many times a frame (a strobe). The shown angle follows the real one but never faster than maxRate rad/s;
+ * only the angle mod 2π shows, so falling behind costs nothing. `st` is any object the machine keeps.
+ */
+PP.visAngle = function (st, a, t, maxRate = 5) {
+  if (st.va == null || st.vt == null || t < st.vt || t - st.vt > 1) { st.va = a; st.vt = t; st.a0 = a; return a; }
+  const d = a - st.a0, dt = t - st.vt;
+  st.a0 = a; st.vt = t;
+  const lim = maxRate * Math.max(dt, 1 / 60);
+  st.va += Math.abs(d) <= lim ? d : Math.sign(d) * lim;
+  if (Math.abs(st.va - a) < 1e-9) st.va = a;
+  return st.va;
+};
 PP.AngleTracker = class {
   start(angle) { this.last = angle; }
   /** Signed turn since the last call. Pass the cursor's distance from the pivot (r) and the
@@ -3151,6 +3236,9 @@ PP.AngleTracker = class {
 PP.disposeTree = function (obj) {
   obj.traverse((o) => {
     if (o.geometry && !(o.geometry.userData && o.geometry.userData.shared)) o.geometry.dispose();
+    // textures made for one build only (river water etc.) are flagged own: free them, or every rebuild leaks GPU memory
+    const mats = Array.isArray(o.material) ? o.material : o.material ? [o.material] : [];
+    for (const m of mats) for (const k of ['map', 'bumpMap', 'alphaMap']) { const t = m[k]; if (t && t.userData && t.userData.own) t.dispose(); }
     if (o.isCSS2DObject && o.element && o.element.parentNode) o.element.parentNode.removeChild(o.element);
   });
 };
@@ -4362,7 +4450,7 @@ const S = {
   mode: 'builder',
   mi: 0, P: {}, p: {}, built: {}, done: {},
   loadType: 'boar', load: 500, team: 'both',
-  showDims: true, showForces: true, showSize: true,
+  showDims: false, showForces: false, showText: false, showSize: true, tried: {},   // measurements + forces start off (less clutter); the view bar turns them on
   solve: false, lock: false, ans: { ma: '', eff: '' }, solved: { ma: false, eff: false },
   auto: false, animTarget: null, spin: false,
   strainUntil: 0, movingUntil: 0, cheerUntil: 0, t: 0,
@@ -4622,8 +4710,8 @@ function updateSizers() {
     h.visible = on;
     if (!on) return;
     const key = 'size:' + sp.key;
-    const hinted = S.hint && S.hint.key === sp.key && !S.sizing && Math.sin(S.t * 7) > 0;
-    h.set(up(sp.at), sp.dir, sp.text, camera, hov === key || (S.sizing && S.sizing.key === sp.key) || hinted);
+    const pulse = S.hint && S.hint.key === sp.key && !S.sizing ? 0.5 + 0.5 * Math.sin(S.t * 3.5) : 0;   // smooth glow, never a blinking label
+    h.set(up(sp.at), sp.dir, sp.text, camera, hov === key || (S.sizing && S.sizing.key === sp.key), pulse);
   });
 }
 /** True when the current obstacle pins this size (fixed value, or min = max), so it can't be dragged. */
@@ -4643,39 +4731,41 @@ function paramMeta(key) {
   }
   return { pr, min: lim(pr).min, max: lim(pr).max, step: pr.step, str: false };
 }
+/** Where a camera ray points on screen, in CSS pixels. */
+function rayPx(ray) {
+  const cv = world.renderer.domElement;
+  const p = ray.origin.clone().addScaledVector(ray.direction, 10).project(camera);
+  return { x: (p.x + 1) / 2 * cv.clientWidth, y: (1 - p.y) / 2 * cv.clientHeight };
+}
+/**
+ * Resizing works on screen, not in 3D: slide the mouse (or finger) along the blue arrow and every step of the
+ * value takes the same number of pixels, so a tiny wedge and a 20 ft log feel the same. The whole range fits in
+ * about 280 px. If the arrow points at the camera (no length on screen), dragging up makes it bigger.
+ */
 function startSizing(key, ray) {
   const m = M();
   const sp = (m.sizers(S.calc, ctx()) || []).find((q) => q.key === key);
   const meta = paramMeta(key);
   if (!sp || !meta || sizeLocked(key)) return;
   const dir = sp.dir.clone().normalize();
-  const cd = camera.getWorldDirection(V());
-  const n = cd.clone().addScaledVector(dir, -cd.dot(dir));
-  if (n.lengthSq() < 1e-6) n.set(0, 1, 0);
-  n.normalize();
-  const q0 = PP.rayPlane(ray, sp.at, n);
-  if (!q0) return;
-  // every step of the value should take at least a few pixels of mouse travel, however small the part
-  // looks on screen (a quarter inch of wedge was under one pixel): slow the drag down when it would be twitchy
-  const pa = sp.at.clone().project(camera), pb = sp.at.clone().add(dir).project(camera);
   const cv = world.renderer.domElement;
-  const pxPerFt = Math.hypot((pb.x - pa.x) * cv.clientWidth / 2, (pb.y - pa.y) * cv.clientHeight / 2);
-  const MIN_PX = 7;
-  let perFt = sp.perFt || 1;
-  if (pxPerFt > 1 && meta.step > 0) perFt = Math.min(perFt, (pxPerFt * meta.step) / MIN_PX);
-  S.sizing = { key, dir, n, at: sp.at.clone(), q0, start: +P()[key], perFt, meta };
+  const pa = sp.at.clone().project(camera), pb = sp.at.clone().add(dir).project(camera);
+  let sx = (pb.x - pa.x) * cv.clientWidth / 2, sy = -(pb.y - pa.y) * cv.clientHeight / 2;
+  const len = Math.hypot(sx, sy);
+  if (len < 4) { sx = 0; sy = -1; } else { sx /= len; sy /= len; }
+  const steps = Math.max(1, Math.round((meta.max - meta.min) / (meta.step || 1)));
+  const pxPerStep = clamp(280 / steps, 6, 34);
+  S.sizing = { key, sx, sy, px0: rayPx(ray), start: +P()[key], pxPerStep, meta };
   setAuto(false);
   sfx('tick');
 }
 function dragSizing(ray) {
   const z = S.sizing;
-  const q = PP.rayPlane(ray, z.at, z.n);
-  if (!q) return;
-  const d = q.sub(z.q0).dot(z.dir);
+  const q = rayPx(ray);
+  const d = (q.x - z.px0.x) * z.sx + (q.y - z.px0.y) * z.sy;
   const meta = paramMeta(z.key);
-  let v = z.start + d * z.perFt;
-  v = Math.round((v - meta.min) / meta.step) * meta.step + meta.min;
-  v = clamp(+v.toFixed(4), meta.min, meta.max);
+  let v = z.start + Math.round(d / z.pxPerStep) * meta.step;
+  v = +clamp(v, meta.min, meta.max).toFixed(4);
   const cur = +P()[z.key];
   if (Math.abs(v - cur) < 1e-9) return;
   P()[z.key] = meta.str ? String(v) : v;
@@ -4687,6 +4777,7 @@ function dragSizing(ray) {
 let liveRoot = null;
 let faunaSet = {};
 function rebuild(keepCam) {
+  $('#blurb').hidden = !!JX();   // at an obstacle the lesson already covers the machine; keep the scene clear
   const m = M();
   if (liveRoot) { scene.remove(liveRoot); PP.disposeTree(liveRoot); liveRoot = null; }
   PP.dims = [];
@@ -4938,6 +5029,8 @@ function tuckBlurb() {
   if (!el.classList.contains('min') && !S.blurbTucked) { S.blurbTucked = true; el.classList.add('min'); renderBlurb(); }
 }
 world.onGrab = (handle, ray, pt) => {
+  S.grabbedOnce = true;
+  if (!String(handle).startsWith('size:')) S.tried[M().id] = true;
   tuckBlurb();
   stopSpin();
   if (handle.startsWith('size:')) { startSizing(handle.slice(5), ray); return; }
@@ -5018,13 +5111,11 @@ function renderTray() {
   const pile = shuffled(parts.map((p, i) => ({ icon: p.icon, i })).concat(DECOYS.slice(0, 2).map((d) => ({ icon: d, i: -1 }))), S.mi * 7 + 3);
   tray.innerHTML = `
     <h3 class="drag" title="Drag to move">🔨 Build the ${esc(m.name.toLowerCase())}</h3>
-    <div class="step">${next ? `Step ${S.buildIdx + 1} of ${parts.length}: <b>${esc(next.label)}</b>` : 'All done!'}</div>
+    <div class="step">${next ? `Step ${S.buildIdx + 1} of ${parts.length}: <b>${esc(next.label)}</b>. Tap its picture.` : 'All done!'}</div>
     <div class="buildbar"><div style="width:${(100 * S.buildIdx) / parts.length}%"></div></div>
     <div class="pile">${pile.map((it, k) => `<button data-k="${k}" data-i="${it.i}" class="${it.i >= 0 && it.i < S.buildIdx ? 'used' : ''}" title="${it.i >= 0 ? esc(parts[it.i].label) : 'Something from the forest'}">${it.icon}</button>`).join('')}</div>
     <div class="tray-msg" id="trayMsg"></div>
-    <details class="steps"${S.trayOpen ? ' open' : ''}><summary>All ${parts.length} steps</summary><ol class="checklist">${parts.map((p, i) => `<li class="${i < S.buildIdx ? 'done' : i === S.buildIdx ? 'next' : ''}">${p.icon} ${esc(p.label)}</li>`).join('')}</ol></details>
-    <div class="tray-foot"><span class="muted">The glowing blue outline shows where it goes.</span><button class="linkish" id="skipBuild">Skip building</button></div>`;
-  tray.querySelector('details.steps').addEventListener('toggle', (e) => { S.trayOpen = e.target.open; });
+    <div class="tray-foot"><span></span><button class="linkish" id="skipBuild">Skip building</button></div>`;
   if (PP.say && next) PP.say(`Step ${S.buildIdx + 1}. ${next.label}.`);
   tray.querySelectorAll('.pile button').forEach((b) => b.addEventListener('click', () => {
     const i = +b.dataset.i;
@@ -5076,15 +5167,17 @@ const bounce = (x) => {
 const insetCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.05, 3000);
 const insetSky = new THREE.Color(0xe4ecdf);
 let lastCap = '';
-S.showInset = store.get('inset', innerWidth > 600);   // phones: start folded so it doesn't cover the machine
+S.showInset = false;   // the close-up starts off every time; the 🔍 Close-up toggle in the view bar opens it
 function renderInset() {
   const m = M();
   const el = $('#inset');
   const info = m.inset && !S.building ? m.inset(S.calc, ctx()) : null;
   const has = !!info;
-  if (el.hidden === has) el.hidden = !has;
-  el.classList.toggle('closed', !S.showInset);
-  if (!has || !S.showInset) return;
+  const tb = $('#tInset');
+  if (tb.hidden === has) tb.hidden = !has;
+  const show = has && S.showInset;
+  if (el.hidden === show) el.hidden = !show;
+  if (!show) return;
   const stage = $('#canvas').getBoundingClientRect();
   const box = $('#insetView').getBoundingClientRect();
   if (!box.width || !box.height) return;
@@ -5116,12 +5209,13 @@ function renderInset() {
     $('#insetCap').innerHTML = info.caption;
   }
 }
-$('#insetBtn').addEventListener('click', () => {
-  S.showInset = !S.showInset;
-  store.set('inset', S.showInset);
-  $('#insetBtn').textContent = S.showInset ? 'hide' : 'show';
-});
-$('#insetBtn').textContent = S.showInset ? 'hide' : 'show';
+function setInset(on) {
+  S.showInset = on;
+  $('#tInset').classList.toggle('on', on);
+}
+$('#insetBtn').addEventListener('click', () => setInset(false));
+$('#tInset').addEventListener('click', () => setInset(!S.showInset));
+$('#insetBtn').textContent = 'hide';
 
 // --------------------------------------------------------- dust puffs
 const puffs = [];
@@ -5477,6 +5571,32 @@ function checkMath() {
   sfx('nope');
 }
 
+// ----------------------------------------------------------- mission steps
+/** Build → test → make it strong enough → finish, with the current step lit up and spelled out. */
+function missionSteps(c, over, ex) {
+  const id = M().id;
+  const capped = !over && c.cap && c.cap.short;
+  const done = S.p[id] >= 0.999;
+  const how = (() => {
+    if (!S.hint) return ex ? 'Change the machine with the <b>+ / −</b> buttons below, or drag a <b class="blue">blue ↔ arrow</b> on it.' : 'Change a size: drag a <b class="blue">blue ↔ arrow</b> on the machine, or use <b>+ / −</b> in Machine specs below.';
+    const meta = paramMeta(S.hint.key);
+    const arrow = sizeHandles.length && S.showSize && (M().sizers(S.calc, ctx()) || []).some((q) => q.key === S.hint.key && !q.hidden);
+    const name = meta ? `<b>${esc(String(typeof meta.pr.label === 'function' ? meta.pr.label(P()) : meta.pr.label).replace(/\s*\(.*\)$/, ''))}</b>` : 'a size';
+    const where = meta && meta.pr.type === 'select' ? 'pick a new choice in <b>Machine specs</b> below' : arrow ? 'drag the <b class="blue">pulsing blue ↔ arrow</b> on the machine, or press <b>+ / −</b> in Machine specs below' : 'press <b>+ / −</b> in Machine specs below';
+    return `💡 ${S.hint.text}. Change ${name}: ${where}.`;
+  })();
+  const steps = [
+    { ok: !!S.built[id], t: ex ? 'Build it' : 'Build the machine', d: 'Tap the glowing parts in the build tray, in order.' },
+    { ok: !!S.tried[id] || done, t: ex ? 'Try it' : 'Test it', d: 'Drag the <b style="color:#c77800">orange ✋ orb</b> on the machine, or press <b>▶ Auto</b>.' },
+    { ok: !over && !capped, t: ex ? 'Make it strong enough' : 'Make it strong enough', d: how },
+    { ok: done, t: ex ? 'Finish the job' : 'Reach the goal', d: 'Keep going until the load moves all the way.' },
+  ];
+  // "strong enough" only becomes the job once they've tested (or it's already strong)
+  let cur = steps.findIndex((q) => !q.ok);
+  if (cur === 2 && !steps[1].ok) cur = 1;
+  return `<ol class="msteps">${steps.map((q, i) => `<li class="${q.ok ? 'ok' : i === cur ? 'now' : ''}"><b>${q.ok ? '✔' : i + 1}</b><span>${q.t}${i === cur ? `<em>${q.d}</em>` : ''}</span></li>`).join('')}</ol>`;
+}
+
 // ----------------------------------------------------------- HUD/status
 let lastHUD = '', lastStatus = '', lastMA = '';
 function renderHUD() {
@@ -5504,7 +5624,7 @@ function renderHUD() {
   const nGot = list.filter((q) => got[q.id]).length;
   const goalText = J ? J.goal : GOALS[id];
   const goal = goalText ? `<div class="goal">🎯 <b>${J ? esc(J.short || 'Goal') + ':' : 'Goal:'}</b> ${esc(goalText)}</div>` : '';
-  const html = `${goal}
+  const html = `${goal}${missionSteps(c, over, ex)}
     <h4>${ex ? 'Strong enough?' : 'Effort check'}</h4>
     <div class="meter"><div class="lbl"><span>${ex ? 'Push needed' : 'Effort needed'}</span><span>${fmt(c.effort, ex ? 0 : 1)} lb</span></div>
       <div class="bar"><div class="fill need ${over ? 'over' : ''}" style="width:${(100 * c.effort) / mx}%"></div></div></div>
@@ -5512,7 +5632,7 @@ function renderHUD() {
       <div class="bar"><div class="fill have" style="width:${(100 * T.strength) / mx}%"></div></div></div>
     <div class="verdict ${over ? 'no' : 'ok'}">${over ? '✖ Too heavy!' : '✔ Strong enough!'}</div>
     ${!over && c.cap && c.cap.short ? `<div class="hintline warn">⚠️ ${c.cap.short}</div>` : ''}
-    ${over && S.hint ? `<div class="hintline">💡 ${S.hint.text}.${sizeHandles.length && (M().sizers(S.calc, ctx()) || []).some((q) => q.key === S.hint.key && !q.hidden) ? ' The pulsing <b class="blue">blue arrow</b> on the machine does it.' : paramMeta(S.hint.key) && paramMeta(S.hint.key).pr.type === 'select' ? ' Change it in <b>Machine specs</b>.' : ''}</div>` : ''}
+    ${S.sideMsg && S.sideMsg.text ? `<div class="hudmsg ${S.sideMsg.kind}">${esc(S.sideMsg.text)}</div>` : ''}
     <div class="progress" title="How far the load has moved"><div style="width:${S.p[id] * 100}%"></div></div>
     <div class="muted" style="margin-top:3px">${c.moveWord || (ex ? 'Moved' : 'Load moved')} ${fmt(moved, 1)} of ${fmt(c.loadDist, 1)} ${c.du}</div>
     <details class="chal" ${S.chOpen ? 'open' : ''}><summary>${J ? '⭐ Stars' : '🏅 Challenges'} <span class="cnt">${nGot}/${list.length}</span></summary>
@@ -5555,9 +5675,13 @@ function renderStatus() {
     if (kind === 'hint') kind = '';
   } else if (S.p[id] >= 0.999) {
     kind = 'good'; text = c.doneText || '🎉 You did it! Press ↺ Reset, or resize the machine and try again.';
-  } else if (S.p[id] < 0.001) {
+  } else if (S.p[id] < 0.001 && (S.mode === 'explorer' || !S.grabbedOnce)) {   // the how-to line leaves once they've grabbed something
     text = S.mode === 'explorer' ? c.kid : 'Drag the orange ✋ orb to work the machine. Drag the blue ↔ arrows to resize it.';
   }
+  // with 💬 Text off, real messages (results, warnings) show in the side panel; the how-to and sizing lines are
+  // already covered there by the mission steps and the effort check
+  S.sideMsg = !S.showText && S.msg && S.t < S.msg.until && !S.building && !S.sizing ? { kind, text } : (!S.showText && kind === 'good' ? { kind, text } : null);
+  if (!S.showText) text = '';
   const key = kind + '|' + text;
   if (key !== lastStatus) { el.className = kind; el.textContent = text; lastStatus = key; }
 }
@@ -5649,7 +5773,7 @@ function shrug() {
 // ------------------------------------------------------------- intro flyover
 /** An establishing shot when the crew reaches an obstacle: the camera sweeps in from high above while the title shows. */
 function playIntro(kicker, title, sub) {
-  if (REDUCED) return;
+  if (REDUCED || PERF.lvl >= 2) return;   // slow devices skip the flyover (it sweeps the whole map)
   endIntro();
   const T = homeTarget().clone(), H = homePos();
   const s0 = new THREE.Spherical().setFromVector3(H.clone().sub(T));
@@ -5676,7 +5800,7 @@ function endIntro(skip) {
   if (!S.intro) return;
   S.intro = null;
   document.body.classList.remove('cine');
-  if (skip) world.flyTo(homePos(), homeTarget(), 0.6);
+  if (skip) world.flyTo(homePos(), homeTarget(), 1.0);
 }
 
 // ------------------------------------------------------------- camera
@@ -5709,7 +5833,7 @@ function setSpin(on) {
 function stopSpin() { if (S.spin && S.started) setSpin(false); }
 
 // ------------------------------------------------------------- controls
-function setAuto(on) { S.auto = on; $('#auto').classList.toggle('on', on); $('#auto').textContent = on ? '⏸ Stop' : '▶ Auto'; }
+function setAuto(on) { if (on) S.tried[M().id] = true; S.auto = on; $('#auto').classList.toggle('on', on); $('#auto').innerHTML = on ? '⏸<span> Stop</span>' : '▶<span> Auto</span>'; }
 function renderActions() {
   const m = M();
   const box = $('#actions');
@@ -5730,6 +5854,7 @@ function selectMachine(i) {
   store.set('machine', i);
 }
 function setTier(tier) {
+  if (!TIERS[tier]) tier = "middle";    // unknown or corrupted saved value
   S.tier = tier;
   S.mode = TIERS[tier].level;
   store.set('tier', tier);
@@ -5788,8 +5913,23 @@ $('#camSpin').addEventListener('click', () => setSpin(!S.spin));
 $('#tDims').addEventListener('click', (e) => { S.showDims = !S.showDims; e.currentTarget.classList.toggle('on', S.showDims); });
 $('#tForces').addEventListener('click', (e) => { S.showForces = !S.showForces; e.currentTarget.classList.toggle('on', S.showForces); });
 $('#tSize').addEventListener('click', (e) => { S.showSize = !S.showSize; e.currentTarget.classList.toggle('on', S.showSize); });
+/** The view bar stays one row: when the labels would make it wrap, the toggles shrink to their icons. */
+function fitBar() {
+  const bar = $('#viewBar');
+  bar.classList.remove('compact');
+  if (bar.offsetHeight > 60) bar.classList.add('compact');
+  $('#stage').style.setProperty('--barH', bar.offsetHeight + 'px');
+}
+if (window.ResizeObserver) new ResizeObserver(fitBar).observe($('#stage'));
+setInterval(fitBar, 700);   // machine actions (+ Pulley, Strike!) come and go
+$('#tText').addEventListener('click', (e) => { S.showText = !S.showText; e.currentTarget.classList.toggle('on', S.showText); lastStatus = ''; });
+$('#tCam').addEventListener('click', (e) => { const pad = $('#camPad'); pad.hidden = !pad.hidden; e.currentTarget.classList.toggle('on', !pad.hidden); });
 $('#auto').addEventListener('click', () => { if (!S.building) { tuckBlurb(); setAuto(!S.auto); } });
-$('#reset').addEventListener('click', () => { S.p[M().id] = 0; S.animTarget = null; setAuto(false); });
+$('#reset').addEventListener('click', () => {   // glide back to the start instead of jumping
+  setAuto(false);
+  const id = M().id;
+  if (S.p[id] > 0.001) { S.animTarget = 0; S.resetting = true; } else { S.p[id] = 0; S.animTarget = null; }
+});
 $('#rebuild').addEventListener('click', () => startBuild());
 $('#helpBtn').addEventListener('click', () => ($('#help').hidden = false));
 $('#helpClose').addEventListener('click', () => { $('#help').hidden = true; });
@@ -5913,7 +6053,19 @@ window.addEventListener('keydown', (e) => {
 // School laptops vary a lot. If the frame rate stays low, step the graphics down (once per step, never
 // back up on its own): 1 = sharp-screen pixels off, 2 = shadows off, 3 = a third of the grass and flowers.
 // The level is remembered on this device; the help box offers a reset.
-const PERF = { lvl: PP.clamp(+store.get('quality', 0) || 0, 0, 3), sum: 0, n: 0, warm: 3 };
+// Chromebooks and other low-power graphics chips start one step down (sharp-screen pixels off) so the first
+// minute isn't choppy while the speed check catches up.
+function weakGPU() {
+  if (/CrOS|Android/i.test(navigator.userAgent)) return true;
+  try {
+    const gl = world.renderer.getContext();
+    const ext = gl.getExtension('WEBGL_debug_renderer_info');
+    const name = ext ? String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)) : '';
+    return /Intel|Mali|Adreno|PowerVR|SwiftShader|llvmpipe|Software|Microsoft Basic/i.test(name);
+  } catch (e) { return false; }
+}
+const savedQ = store.get('quality', null);
+const PERF = { lvl: PP.clamp(savedQ != null ? +savedQ || 0 : weakGPU() ? 1 : 0, 0, 3), sum: 0, n: 0, slow: 0, warm: 3 };
 function applyQuality(l) {
   const r = world.renderer;
   const pr = Math.min(window.devicePixelRatio || 1, l >= 1 ? 1 : 2);
@@ -5932,10 +6084,11 @@ function watchSpeed(raw) {
   if (PERF.lvl >= 3 || document.visibilityState !== 'visible' || raw > 250) return;   // ignore pauses and hidden tabs
   if (PERF.warm > 0) { PERF.warm -= raw / 1000; return; }                              // let shaders compile first
   PERF.sum += raw; PERF.n++;
-  if (PERF.sum < 2500) return;
-  const fps = (1000 * PERF.n) / PERF.sum;
-  PERF.sum = 0; PERF.n = 0;
-  if (fps < 24) {
+  if (raw > 45) PERF.slow++;                                                           // hitches count too, not just the average
+  if (PERF.sum < 2000) return;
+  const fps = (1000 * PERF.n) / PERF.sum, hitchy = PERF.slow / PERF.n > 0.12;
+  PERF.sum = 0; PERF.n = 0; PERF.slow = 0;
+  if (fps < 32 || hitchy) {
     PERF.lvl++;
     store.set('quality', PERF.lvl);
     applyQuality(PERF.lvl);
@@ -5957,16 +6110,47 @@ applyQuality(PERF.lvl);
 
 // ---------------------------------------------------------------- loop
 let last = performance.now();
+// School laptops can drop the 3D graphics when memory runs low (lots of tabs). Instead of a frozen black screen,
+// say what happened and reload (Journey progress is saved on the device).
+{
+  const cv = world.renderer.domElement;
+  cv.addEventListener('webglcontextlost', (e) => {
+    e.preventDefault();
+    S.paused = true;
+    let el = $('#glLost');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'glLost';
+      el.className = 'card parch';
+      el.innerHTML = '<h3>🪨 The graphics took a break</h3><p>This computer ran low on memory. Your Journey progress is saved.</p><button class="primary">Reload the game</button>';
+      el.querySelector('button').onclick = () => location.reload();
+      $('#stage').appendChild(el);
+    }
+  });
+  // don't reload on our own: a student may be typing a reflection on a Journey page. The card's button reloads.
+  cv.addEventListener('webglcontextrestored', () => { const el = $('#glLost'); if (el) el.querySelector('p').textContent = 'The graphics are ready again. Reload to keep building. Your Journey progress is saved.'; });
+}
+// One bad frame must never freeze the game: the next frame is booked first, and an error is logged (once per
+// kind) instead of stopping the loop. A machine that keeps failing gets rebuilt once.
+const frameErrs = new Map();
 function frame(now) {
-  const raw = now - last;
-  const dt = Math.min(0.05, raw / 1000);
-  last = now;
-  update(dt);
-  watchSpeed(raw);
   requestAnimationFrame(frame);
+  const raw = now - last;
+  const dt = Math.min(0.05, Math.max(0, raw / 1000) || 0);
+  last = now;
+  try {
+    update(dt);
+    watchSpeed(raw);
+  } catch (e) {
+    const k = String(e && e.message);
+    const n = (frameErrs.get(k) || 0) + 1;
+    frameErrs.set(k, n);
+    if (n === 1) console.error('Frame error (the game keeps running):', e);
+    if (n === 30) { S.sizing = null; S.animTarget = null; S.needRebuild = true; }   // stuck? rebuild the scene once
+  }
 }
 const BASE_FOV = camera.fov;
-const DOF = { k: 0 };
+const DOF = { k: 0, on: false };
 function update(dt) {
   if (S.paused) return;
   const rdt = dt;
@@ -5987,9 +6171,12 @@ function update(dt) {
   }
   if (S.animTarget != null) {
     const p = S.p[m.id];
-    const step = 1.4 * dt;
-    if (Math.abs(S.animTarget - p) <= step) { tryMove(S.animTarget); S.animTarget = null; }
-    else if (!tryMove(p + Math.sign(S.animTarget - p) * step)) S.animTarget = null;
+    const step = (S.resetting ? Math.max(0.5, 4.5 * Math.abs(S.animTarget - p)) : 1.4) * dt;   // a reset eases out as it lands
+    if (Math.abs(S.animTarget - p) <= step) { tryMove(S.animTarget); if (S.resetting) S.p[m.id] = S.animTarget; S.animTarget = null; S.resetting = false; }
+    else if (!tryMove(p + Math.sign(S.animTarget - p) * step)) {
+      if (S.resetting) S.p[m.id] = S.animTarget;   // a reset always gets home
+      S.animTarget = null; S.resetting = false;
+    }
   }
   if (S.drops.length) {
     S.drops = S.drops.filter((d) => {
@@ -6009,7 +6196,14 @@ function update(dt) {
   } else {
     const c = ctx();
     (PP.dims || []).forEach((d) => (d.visible = c.showDims));
-    const r = m.pose(poseP(m), S.calc, c, S.t);
+    // while a hand drags the machine, the shown motion eases toward the drag (mouse events arrive unevenly, so the
+    // raw position stutters); Auto, Reset and slides are already smooth and show exactly
+    const pt = poseP(m);
+    let ps = pt;
+    if (world.dragging() && !S.sizing && S.pShowId === m.id && S.pShow != null && Math.abs(pt - S.pShow) < 0.25) ps = S.pShow + (pt - S.pShow) * Math.min(1, dt * 26);
+    if (Math.abs(ps - pt) < 1e-4) ps = pt;
+    S.pShow = ps; S.pShowId = m.id;
+    const r = m.pose(ps, S.calc, c, S.t);
     S.pose = r;
     placeArrow(arrows.effort, r && r.effort, S.calc.effort, lbl(`Push ${fmt(S.calc.effort, 0)} lb`, `Effort ${fmt(S.calc.effort)} lb`, `F<sub>e</sub> = ${fmt(S.calc.effort)} lb`));
     const loadName = m.loadName ? lbl(...m.loadName) : m.id === 'wedge' ? lbl('Wood pushes back', 'Resistance', 'F<sub>R</sub> =') : lbl(S.loadType === 'boulder' ? 'Boulder' : 'Boar', 'Load', 'F<sub>L</sub> =');
@@ -6020,7 +6214,7 @@ function update(dt) {
   if (S.ghost) {
     PP.mat.ghost.opacity = 0.42 + Math.sin(S.t * 5) * 0.16;
   }
-  (m.grips || []).forEach((g) => { g.visible = !S.building && !g.hidden; g.tick(S.t, camera); });
+  (m.grips || []).forEach((g) => { g.visible = !S.building && !g.hidden; if (g.group.visible) g.label.visible = S.showText; g.tick(S.t, camera); });
   // fade out tree canopy that would block a top-down view
   const fromAbove = camera.position.clone().sub(controls.target).normalize().y > 0.88;
   if (m.root && m._canopyFromAbove !== fromAbove) {
@@ -6081,7 +6275,7 @@ function update(dt) {
 /** Close-ups get a camera's shallow focus: the machine stays sharp, the far hills (and anything very near) go soft. */
 function dofBlur(dt) {
   let want = 0;
-  if (!S.intro && PERF.lvl === 0) {
+  if (DOF.on && !S.intro && PERF.lvl === 0) {   // off: the blur pass froze school laptops and made close-ups stutter
     const hd = homePos().distanceTo(homeTarget());
     const d = camera.position.distanceTo(controls.target);
     want = clamp((0.82 * hd - d) / (0.42 * hd), 0, 1);
@@ -6341,9 +6535,7 @@ const ALPHAS = [{ a: 0.96, label: '◼ Solid' }, { a: 0.78, label: '◧ Clear' }
 let alphaIdx = clamp(store.get('panelAlpha', 1) | 0, 0, 2);
 function applyAlpha() {
   document.documentElement.style.setProperty('--pa', ALPHAS[alphaIdx].a);
-  $('#tAlpha').textContent = ALPHAS[alphaIdx].label;
 }
-$('#tAlpha').addEventListener('click', () => { alphaIdx = (alphaIdx + 1) % ALPHAS.length; store.set('panelAlpha', alphaIdx); applyAlpha(); });
 applyAlpha();
 /** Text grows and shrinks with a panel when the student resizes it (scrollbars cover the rest). */
 function makeFloating(el, base) {
