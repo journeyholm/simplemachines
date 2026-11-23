@@ -310,7 +310,7 @@ body.cine #stage > :not(#canvas):not(#cine), body.cine .label-layer, body.cine #
   #machines { flex-direction: row; overflow-x: auto; padding: 8px; }
   #machines button { min-width: 78px; }
   #blurb { max-width: calc(100% - 28px); }
-  #hud { position: static; }
+  #hud { position: relative; top: auto; }   /* not pinned on phones; relative keeps the fold button in its corner */
   #side { overflow: visible; }
 }
 
@@ -897,6 +897,51 @@ body.cine #briefBack { display: none; }
 #glLost { position: absolute; z-index: 40; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(380px, calc(100% - 24px)); padding: 14px 16px; text-align: center; }
 #glLost h3 { font-family: var(--hand); font-weight: 400; font-size: 24px; margin: 0 0 6px; }
 
+/* ---- side panels: fold and resize ---- */
+#hudFold { position: absolute; top: 6px; right: 6px; z-index: 2; width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid var(--edge); background: #fffaf0; color: var(--ink); font-size: 13px; line-height: 1; padding: 0; cursor: pointer; display: grid; place-items: center; }
+#hudFold:hover { background: #fff; }
+#hud #maBadge { margin-right: 26px; }
+#hudBody { overflow-y: auto; overscroll-behavior: contain; }
+#hud .hudmini { display: none; font-weight: 800; font-size: 13px; padding: 2px 2px 0; }
+#hud .hudmini.ok { color: var(--ok); }
+#hud .hudmini.no { color: var(--bad); }
+#hud.min .hudmini { display: block; }
+#hud.min #hudBody > :not(.hudmini) { display: none; }
+#hud.min #hudBody { max-height: none !important; }
+#hud.min #maBadge { margin-bottom: 4px; }
+#hud .vgrip { height: 12px; margin: 4px -12px -10px; cursor: ns-resize; touch-action: none; position: relative; border-radius: 0 0 10px 10px; }
+#hud .vgrip::after { content: ''; position: absolute; left: 50%; top: 4px; width: 46px; height: 4px; margin-left: -23px; border-radius: 3px; background: #c9a86a; }
+#hud .vgrip:hover::after, #hud.sizing .vgrip::after, #hud .vgrip:focus-visible::after { background: var(--amber, #e0a030); }
+#hud.min .vgrip { display: none; }
+#hud.sizing, #hud.sizing * { user-select: none; }
+#specs > h3, #log > h3 { cursor: pointer; user-select: none; }
+#specs > h3::after, #log > h3::after { content: '▴'; margin-left: auto; flex: none; width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--edge); background: #fffaf0; font-family: var(--body); font-size: 12px; line-height: 21px; text-align: center; color: var(--ink); }
+#specs > h3:hover::after, #log > h3:hover::after { background: #fff; }
+#specs.folded > h3::after, #log.folded > h3::after { content: '▾'; }
+#specs.folded > :not(h3), #log.folded > :not(h3) { display: none !important; }
+#specs.folded > h3, #log.folded > h3 { margin-bottom: 0; }
+
+/* graphics setting in the Help box */
+.modal-card .gfx { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 10px 0 12px; padding: 10px 12px; background: #fffaf0; border: 1.5px dashed #c9a86a; border-radius: 10px; }
+.modal-card .gfx .seg { display: inline-flex; border: 2px solid var(--edge); border-radius: 10px; overflow: hidden; }
+.modal-card .gfx .seg button { border: 0; background: #fffaf0; padding: 6px 12px; font-weight: 800; font-size: 14px; color: var(--ink); cursor: pointer; }
+.modal-card .gfx .seg button + button { border-left: 2px solid var(--edge); }
+.modal-card .gfx .seg button.on { background: #2f8a3e; color: #fff; }
+.modal-card .gfx #qualityNote { flex-basis: 100%; margin: 0; }
+
+/* tablets / small laptops in the Journey: the obstacle chip squeezed the top-bar buttons off the right edge.
+   The obstacle name shrinks with the window (ending in …) and disappears when there is no room for it. */
+@media (min-width: 601px) {
+  .hbtns { min-width: 0; flex: 0 1 auto; }
+  .hbtns > button { flex: none; }
+  #jchip { min-width: 0; flex: 0 1 auto; }
+  #jchip > button { flex: none; }
+  #jchip b { min-width: 0; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tiers { flex: none; }
+}
+@media (max-width: 1200px) and (min-width: 601px) { body.journey .tiers button { padding: 5px 8px; } body.journey #top { gap: 10px; } body.journey .hbtns { gap: 6px; } }
+@media (max-width: 1080px) and (min-width: 601px) { body.journey #jchip b { display: none; } body.journey #jchip { padding-left: 6px; } }
+
 </style>
   <script type="importmap">
   {
@@ -1000,7 +1045,7 @@ body.cine #briefBack { display: none; }
     </main>
 
     <aside id="side">
-      <section id="hud" class="card parch"><div id="maBadge" title="Mechanical advantage"></div><div id="hudBody"></div></section>
+      <section id="hud" class="card parch"><button id="hudFold" class="fold" aria-expanded="true" aria-label="Hide the mission panel" title="Hide / show this panel">▴</button><div id="maBadge" title="Mechanical advantage"></div><div id="hudBody"></div><div id="hudGrip" class="vgrip" role="separator" aria-orientation="horizontal" aria-label="Drag to make the mission panel taller or shorter" title="Drag to make this panel taller or shorter"></div></section>
       <section id="specs" class="card parch"></section>
       <section id="log" class="card parch"></section>
     </aside>
@@ -1088,9 +1133,13 @@ PP.fmt = (n, d = 1) => {
   if (!isFinite(n)) return '—';
   // sizes come in ¼-inch steps: show 1.75 as 1.75, not 1.8, so "6 ÷ 1.75 = 3.43" adds up on screen
   if (d === 1 && Math.abs(n * 4 - Math.round(n * 4)) < 1e-9) d = 2;
-  const r =Math.round(n * Math.pow(10, d)) / Math.pow(10, d);
-  return r.toLocaleString(undefined, { maximumFractionDigits: d });
+  const r = Math.round(n * Math.pow(10, d)) / Math.pow(10, d);
+  // toLocaleString(…, options) builds a new number formatter on every call; labels call this thousands of
+  // times a second, so it was ~10% of all CPU while resizing. Same output, one cached formatter per precision.
+  const f = NUMF[d] || (NUMF[d] = new Intl.NumberFormat(undefined, { maximumFractionDigits: d }));
+  return f.format(r);
 };
+const NUMF = [];
 const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
 PP.V = V;
 const UP = V(0, 1, 0);
@@ -1166,6 +1215,7 @@ PP.windify = function (m, amp = 0.25, div = 10) {
  * catch the light in close-ups. Cheap (no extra textures); called after each scene rebuild.
  */
 PP.addBumps = function (root) {
+  if (PP.noBumps) return;   // ⚡ Fast graphics: flat surfaces are cheaper to draw
   const seen = new Set();
   root.traverse((o) => {
     if (!o.isMesh || !o.material) return;
@@ -1418,23 +1468,41 @@ const KNOT_G = new THREE.SphereGeometry(1, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2
 const KNOT_EYE = new THREE.CircleGeometry(1, 12);
 const STUB_G = new THREE.CylinderGeometry(0.75, 1, 1, 8, 1);
 let knotMat = null;
+const LOG_GEO = new Map();
+/** After a build: free cached log shapes that nothing in the scene uses any more (three.js holds every uploaded
+ *  shape until it is disposed, so just forgetting them would leak graphics memory as students switch sets). */
+PP.pruneLogCache = function (scene) {
+  if (LOG_GEO.size < 40) return;
+  const used = new Set();
+  scene.traverse((o) => { if (o.geometry && o.geometry.userData.logKey) used.add(o.geometry); });
+  for (const [k, g] of LOG_GEO) if (!used.has(g)) { LOG_GEO.delete(k); g.dispose(); }
+};
 PP.makeLog = function (length, radius = 0.4, seed = 1, opts = {}) {
   const rnd = PP.rng(seed);
   const rTop = radius * (0.92 + rnd() * 0.08);
-  const geo = new THREE.CylinderGeometry(rTop, radius, length, 16, Math.max(2, Math.round(length * 1.5)), false);
-  // bumpy, slightly irregular, with long bark ridges running down the trunk
-  const p = geo.attributes.position;
   const ph = rnd() * 6.28;
-  for (let i = 0; i < p.count; i++) {
-    const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
-    const rr = Math.hypot(x, z);
-    if (rr > 0.01) {
-      const a = Math.atan2(z, x);
-      const k = 1 + (Math.sin(y * 2.3 + seed) * 0.03 + Math.sin(a * 5 + y) * 0.025 + Math.sin(a * 8 + ph + y * 0.15) * 0.018);
-      p.setX(i, x * k); p.setZ(i, z * k);
+  // the bark shape depends only on (length, radius, seed): a resize step rebuilds the machine, but most of its logs
+  // didn't change, so their shapes come from this cache instead of being carved again
+  const gk = length.toFixed(4) + '|' + radius.toFixed(4) + '|' + seed;
+  let geo = LOG_GEO.get(gk);
+  if (!geo) {
+    geo = new THREE.CylinderGeometry(rTop, radius, length, 16, Math.max(2, Math.round(length * 1.5)), false);
+    // bumpy, slightly irregular, with long bark ridges running down the trunk
+    const p = geo.attributes.position;
+    for (let i = 0; i < p.count; i++) {
+      const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+      const rr = Math.hypot(x, z);
+      if (rr > 0.01) {
+        const a = Math.atan2(z, x);
+        const k = 1 + (Math.sin(y * 2.3 + seed) * 0.03 + Math.sin(a * 5 + y) * 0.025 + Math.sin(a * 8 + ph + y * 0.15) * 0.018);
+        p.setX(i, x * k); p.setZ(i, z * k);
+      }
     }
+    geo.computeVertexNormals();
+    geo.userData.shared = true;                       // several logs may use it: freed by PP.pruneLogCache, not with one scene
+    geo.userData.logKey = gk;
+    LOG_GEO.set(gk, geo);
   }
-  geo.computeVertexNormals();
   const bark = barkFor(length, radius);
   const m = new THREE.Mesh(geo, [bark, MAT.end, MAT.end]);
   m.rotation.z = -Math.PI / 2;
@@ -1916,7 +1984,37 @@ function seg(o, a, b) {
  * Machines call .face(pt), .reach(pt), .strain(amt), .walk(phase) in pose();
  * the game loop calls .update(t, dt) afterwards to solve the IK and animate.
  */
+// Ogg and Ugg are ~100 meshes each; building them took ~60% of a machine rebuild, and every resize step rebuilt
+// them. Now a finished hunter goes back to a pool when its scene is torn down (PP.releaseHunters) and the next
+// build reuses it, keeping its current pose so the crew doesn't snap back to standing on every step. Their
+// geometries are marked shared so PP.disposeTree never frees a pooled hunter's shapes.
+const HUNTER_POOL = { ogg: [], ugg: [] };
 PP.makeHunter = function (variant = 'ogg') {
+  const pool = HUNTER_POOL[variant === 'ogg' ? 'ogg' : 'ugg'];
+  const h = pool.pop();
+  if (h) {
+    h.position.set(0, 0, 0); h.rotation.set(0, 0, 0); h.scale.set(1, 1, 1);
+    h.visible = true;
+    h.reach(null); h.strain(0); h.walk(0); h.cheer(false); h.clearReact();
+    h.userData.glT = null;   // its next scene places it directly (no gliding over from the last one)
+    return h;
+  }
+  const g = buildHunter(variant);
+  g.userData.pooled = variant === 'ogg' ? 'ogg' : 'ugg';
+  g.traverse((o) => { if (o.geometry) o.geometry.userData.shared = true; });
+  return g;
+};
+/** Take every pooled hunter out of a scene that is about to be thrown away, for the next build to reuse. */
+PP.releaseHunters = function (obj) {
+  const found = [];
+  obj.traverse((o) => { if (o.userData.pooled) found.push(o); });
+  found.forEach((h) => {
+    if (h.parent) h.parent.remove(h);
+    const pool = HUNTER_POOL[h.userData.pooled];
+    if (!pool.includes(h) && pool.length < 6) pool.push(h);
+  });
+};
+function buildHunter(variant) {
   const big = variant === 'ogg';
   const s = big ? 1 : 0.93;
   const seed = big ? 1.3 : 4.1;
@@ -2124,6 +2222,7 @@ PP.makeHunter = function (variant = 'ogg') {
     st.react = { kind, t0, dur, look: look && look.clone(), pt: pt && pt.clone(), yaw0: null };
   };
   g.reacting = (t) => !!(st.react && t >= st.react.t0 && t < st.react.t0 + st.react.dur);
+  g.clearReact = () => { st.react = null; };   // a pooled hunter starts its next scene without an old gesture
   const sst = (a, b, x) => { const k = PP.clamp((x - a) / (b - a), 0, 1); return k * k * (3 - 2 * k); };
   const wpTmp = new THREE.Vector3();
   function reactArm(R, u, A, S, i) {
@@ -2189,7 +2288,9 @@ PP.makeHunter = function (variant = 'ogg') {
     }
     const k = st.strain;
     const walking = Math.abs(st.phase) > 1e-6;
-    const jump = st.cheer ? Math.abs(Math.sin(t * 7 + seed)) * 0.5 : 0;
+    // the cheer's hop and sway fade in and out (they used to start at full height: the whole body popped up)
+    st.cheerK = PP.clamp((st.cheerK || 0) + (st.cheer ? 1 : -1) * Math.min(dt, 0.1) / 0.2, 0, 1);
+    const jump = st.cheerK ? Math.abs(Math.sin(t * 7 + seed)) * 0.5 * st.cheerK : 0;
     rig.position.y = jump;
     // bend at the hips and knees when the work is too low to reach standing up
     let leanT = 0;
@@ -2208,7 +2309,7 @@ PP.makeHunter = function (variant = 'ogg') {
     const shift = Math.sin(t * 0.8 + seed) * 0.07 * st.idle;               // shift weight foot to foot
     body.position.set((k ? Math.sin(t * 55) * 0.025 : 0) + shift, HIP - crouch - Math.abs(shift) * 0.25, -0.25 * st.lean);
     body.rotation.x = 0.3 * k + 0.6 * st.lean + Math.sin(t * 1.3 + seed) * 0.015;
-    body.rotation.z = -shift * 0.5 + (st.cheer ? Math.sin(t * 7 + seed) * 0.08 : 0);
+    body.rotation.z = -shift * 0.5 + Math.sin(t * 7 + seed) * 0.08 * (st.cheerK || 0);
     torso.scale.y = 1 + Math.sin(t * 2.4 + seed) * 0.012 * (1 + 2 * k);
     if (R && R.kind === 'shrug') body.position.y += 0.13 * rw;          // shoulders up to the ears
     if (R && R.kind === 'highfive') body.rotation.x += 0.12 * rw;      // lean in to meet the hand
@@ -2254,6 +2355,13 @@ PP.makeHunter = function (variant = 'ogg') {
     g.updateMatrixWorld(true);
     lat.set(Math.cos(g.rotation.y), 0, -Math.sin(g.rotation.y));
     const headT = new THREE.Vector3();
+    // switching between gripping, cheering and hanging used to snap the arms in one frame (a visible pop the moment
+    // a machine finished): the hands now ease from where they were to the new pose over ~¼ s
+    const mode = st.cheer ? 'c' : st.target ? 't' : 'h';
+    if (st.armMode !== mode) { if (st.armMode && st.armPrev) { st.armFrom = st.armPrev.map((v) => v.clone()); st.armBlend = 1; } st.armMode = mode; }
+    st.armBlend = Math.max(0, (st.armBlend || 0) - Math.min(dt, 0.1) / 0.25);
+    const ease = 1 - st.armBlend * st.armBlend * (3 - 2 * st.armBlend);
+    st.armPrev = st.armPrev || [];
     arms.forEach((A, i) => {
       const S = SH[i];
       let T;
@@ -2263,6 +2371,8 @@ PP.makeHunter = function (variant = 'ogg') {
         headT.add(T);
       } else T = S.clone().add(V(A.sd * 0.32, -2.05, 0.3 + Math.sin(t * 1.2 + i) * 0.04));
       if (R && rw > 0.001) T = T.clone().lerp(reactArm(R, ru, A, S, i), rw);
+      if (st.armBlend > 0 && st.armFrom && st.armFrom[i]) T = st.armFrom[i].clone().lerp(T, ease);
+      (st.armPrev[i] || (st.armPrev[i] = new THREE.Vector3())).copy(T);
       const { E, H } = twoBone(S, T, AU, AF, V(A.sd * 0.75, -0.55, -0.55));
       seg(A.up, S, E);
       seg(A.fo, E, H);
@@ -2278,6 +2388,9 @@ PP.makeHunter = function (variant = 'ogg') {
     if (R && R.kind === 'wipe') head.rotation.x -= 0.18 * rw;
   };
   g.update(0, 1);
+  // ~140 little meshes per hunter (beads, teeth, fringe, hair tufts…) were ~140 draws each, twice with shadows.
+  // Parts that ride rigidly on the same limb or head are folded together; the face parts that move on their own stay.
+  try { mergeRigid(g, new Set([...brows, smile, mouth, teeth, ...sweat])); } catch (e) { console.warn('hunter merge', e); }
   // a soft contact shadow under the feet: grounds the figure in close-ups even where the sun's shadow is faint
   const blob = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: softTex(), color: 0x000000, transparent: true, opacity: 0.32, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }));
   blob.rotation.x = -Math.PI / 2;
@@ -2727,8 +2840,12 @@ function makeLabel(cls, text = '') {
   div.textContent = text;
   const o = new CSS2DObject(div);
   o.userData.div = div;
+  LABELS.add(o);
   return o;
 }
+/** Every label made, so the label pass can visit just these instead of walking the whole scene (twice) each frame. */
+const LABELS = new Set();
+PP.labels = LABELS;
 PP.makeLabel = makeLabel;
 
 /** Shading for the force arrows: lit like a rounded tube (with a glint), plus bands that flow toward the head. */
@@ -3117,6 +3234,7 @@ PP.initWorld = function (container) {
   let dragging = null;
   let hover = null;
   const world = { renderer, labels, scene, camera, controls, sun, flyTo, tickCamera, orbit, setFocus, ray, envTick, draw, tweening: () => !!tween };
+  PP.cam = camera;   // crank handles read the pointer in screen space (PP.crankAngle)
   function setRay(e) {
     const r = renderer.domElement.getBoundingClientRect();
     ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
@@ -3209,13 +3327,61 @@ PP.rayPlane = function (ray, point, normal) {
  * only the angle mod 2π shows, so falling behind costs nothing. `st` is any object the machine keeps.
  */
 PP.visAngle = function (st, a, t, maxRate = 5) {
-  if (st.va == null || st.vt == null || t < st.vt || t - st.vt > 1) { st.va = a; st.vt = t; st.a0 = a; return a; }
+  if (st.va == null) { st.va = a; st.vt = t; st.a0 = a; return a; }
+  // after a pause (or a rebuild that reset the clock) carry on from the angle on screen instead of snapping to the
+  // real one: only the angle mod 2π shows, so it just catches up smoothly
+  if (st.vt == null || t < st.vt || t - st.vt > 1) { st.vt = t; st.a0 = a; return st.va; }
   const d = a - st.a0, dt = t - st.vt;
   st.a0 = a; st.vt = t;
   const lim = maxRate * Math.max(dt, 1 / 60);
   st.va += Math.abs(d) <= lim ? d : Math.sign(d) * lim;
   if (Math.abs(st.va - a) < 1e-9) st.va = a;
   return st.va;
+};
+/** Move a hunter (or anything) toward p, but no faster than vmax ft/s: a crew that has to get somewhere new
+ *  walks there instead of popping. The first call (or after a pause or rebuild) places it directly. */
+PP.glide = function (o, p, t, vmax = 6) {
+  const u = o.userData;
+  if (u.glT != null && t > u.glT && t - u.glT < 0.5) {
+    const d = p.clone().sub(o.position), L = d.length(), m = vmax * (t - u.glT);
+    if (L > m) p = o.position.clone().addScaledVector(d, m / L);
+  }
+  o.position.copy(p);
+  u.glT = t;
+  return o.position;
+};
+/** Where the pointer is around a crank, as an angle in the crank's own plane.
+ *  center: the pivot; u, v: unit axes in that plane (angle = atan2(along v, along u)).
+ *  It works on the SCREEN picture of the crank, not by hitting its 3D plane: from a low camera a horizontal crank
+ *  plane is seen almost edge-on, and a ray hitting it near the horizon swings wildly with a 1-pixel move (the turn
+ *  jumped, stalled and reversed). On screen the crank is an ellipse; the pointer is read in that ellipse's own
+ *  axes, and a very flat ellipse is rounded out (at most ~3x) so a tiny wiggle can't become a big turn.
+ *  Returns { angle, r } (r in world units, like the 3D way) or null when the pointer is unusable. */
+PP.crankAngle = function (ray, center, u, v) {
+  const cam = PP.cam;
+  if (!cam) return null;
+  const asp = cam.aspect || 1;
+  const scr = (p) => { const q = p.clone().project(cam); return [q.x * asp, q.y]; };
+  const c = scr(center);
+  const cz = center.clone().project(cam).z;
+  if (!(cz < 1)) return null;                                   // behind the camera
+  const pu = scr(center.clone().add(u)), pv = scr(center.clone().add(v));
+  let U = [pu[0] - c[0], pu[1] - c[1]], W = [pv[0] - c[0], pv[1] - c[1]];
+  const lu = Math.hypot(U[0], U[1]), lw = Math.hypot(W[0], W[1]), big = Math.max(lu, lw);
+  if (big < 1e-6) return null;
+  const round = (A, la, B) => {                                  // stretch a squashed axis up to 35% of the long one
+    if (la >= 0.35 * big) return A;
+    let d = la > 1e-6 ? [A[0] / la, A[1] / la] : [-B[1], B[0]];
+    if (la <= 1e-6) { const n = Math.hypot(d[0], d[1]); d = [d[0] / n, d[1] / n]; }
+    return [d[0] * 0.35 * big, d[1] * 0.35 * big];
+  };
+  U = round(U, lu, W); W = round(W, lw, U);
+  const det = U[0] * W[1] - U[1] * W[0];
+  if (Math.abs(det) < 0.05 * big * big) return null;           // edge-on: no usable circle
+  const pt = scr(ray.origin.clone().addScaledVector(ray.direction, 10));
+  const dx = pt[0] - c[0], dy = pt[1] - c[1];
+  const a = (dx * W[1] - dy * W[0]) / det, b = (U[0] * dy - U[1] * dx) / det;   // pointer = a·U + b·W
+  return { angle: Math.atan2(b, a), r: Math.hypot(a, b) };
 };
 PP.AngleTracker = class {
   start(angle) { this.last = angle; }
@@ -3232,6 +3398,127 @@ PP.AngleTracker = class {
   }
 };
 
+/** Fold the still parts of a scenery group into a few big meshes, one per material.
+ *  An obstacle's set had 500–1,650 separate meshes (every rock, fern, leaf and twig), so a Chromebook spent most
+ *  of each frame just walking and drawing them one by one. Merged, the same picture takes a few dozen draws.
+ *  Left alone: anything that moves (userData.anim on it or a parent), the hunters, labels, see-through parts,
+ *  multi-material meshes, anything tagged in userData (grass holes, canopy…), and big ground/terrain pieces
+ *  (pebbles are dropped onto those by raycast). Returns how many meshes were folded in. */
+PP.mergeStatic = function (group) {
+  group.updateMatrixWorld(true);
+  const inv = new THREE.Matrix4().copy(group.matrixWorld).invert();
+  const bins = new Map(), take = [], bb = new THREE.Box3(), m4 = new THREE.Matrix4();
+  const walk = (o) => {
+    for (const c of o.children) {
+      if (!c.visible || c.userData.anim || c.userData.pooled || c.userData.handle || c.isCSS2DObject || c.isLight || c.isPoints || c.isLine || c.isSprite) continue;
+      if (c.isMesh) {
+        const g = c.geometry, mt = c.material;
+        const ok = !c.isInstancedMesh && !c.isSkinnedMesh && !c.children.length && !Object.keys(c.userData).length && g && g.isBufferGeometry
+          && !Array.isArray(mt) && !mt.transparent && g.attributes.position && !Object.keys(g.morphAttributes || {}).length && !c.onBeforeRender.length;
+        if (ok) {
+          m4.multiplyMatrices(inv, c.matrixWorld);
+          if (!g.boundingBox) g.computeBoundingBox();
+          bb.copy(g.boundingBox).applyMatrix4(m4);
+          if (bb.max.x - bb.min.x > 10 && bb.max.z - bb.min.z > 10) { walk(c); continue; }   // terrain stays its own mesh
+          const attrs = Object.keys(g.attributes).sort().filter((k) => ['position', 'normal', 'uv', 'color'].includes(k));
+          if (!attrs.includes('normal')) continue;
+          const key = [mt.uuid, attrs.join('+'), g.index ? 'i' : 'n', c.castShadow ? 1 : 0, c.receiveShadow ? 1 : 0, c.renderOrder, c.frustumCulled ? 1 : 0].join('|');
+          if (!bins.has(key)) bins.set(key, { mt, cast: c.castShadow, recv: c.receiveShadow, ro: c.renderOrder, fc: c.frustumCulled, attrs, list: [] });
+          bins.get(key).list.push({ c, m: m4.clone() });
+          continue;
+        }
+      }
+      walk(c);
+    }
+  };
+  walk(group);
+  let n = 0;
+  for (const b of bins.values()) {
+    if (b.list.length < 2) continue;
+    const geos = b.list.map(({ c, m }) => {
+      const src = c.geometry, out = new THREE.BufferGeometry();
+      b.attrs.forEach((k) => out.setAttribute(k, src.attributes[k].clone()));
+      if (src.index) out.setIndex(src.index.clone());
+      out.applyMatrix4(m);
+      if (m.determinant() < 0 && out.index) {          // a mirrored part: flip its triangles so they still face out
+        const ix = out.index.array;
+        for (let i = 0; i < ix.length; i += 3) { const t = ix[i + 1]; ix[i + 1] = ix[i + 2]; ix[i + 2] = t; }
+      }
+      return out;
+    });
+    let merged = null;
+    try { merged = mergeGeometries(geos, false); } catch (e) { merged = null; }
+    geos.forEach((g) => g.dispose());
+    if (!merged) continue;
+    const mesh = new THREE.Mesh(merged, b.mt);
+    mesh.castShadow = b.cast; mesh.receiveShadow = b.recv; mesh.renderOrder = b.ro; mesh.frustumCulled = b.fc;
+    mesh.matrixAutoUpdate = false;
+    mesh.userData.merged = true;                         // not ground for pebbles, not a handle
+    group.add(mesh);
+    b.list.forEach(({ c }) => {
+      c.parent.remove(c);
+      if (!(c.geometry.userData && c.geometry.userData.shared)) c.geometry.dispose();
+      n++;
+    });
+  }
+  // empty groups left behind still cost a matrix update each frame
+  const prune = (o) => { for (const c of o.children.slice()) { prune(c); if (c.type === 'Group' && !c.children.length && !Object.keys(c.userData).length) o.remove(c); } };
+  prune(group);
+  return n;
+};
+
+/** Inside every group of obj, fold its direct child meshes that share a material into one mesh (in the group's own
+ *  space, so the group can still swing an arm or turn a head). keep: meshes that move on their own. */
+function mergeRigid(obj, keep) {
+  const groups = [];
+  obj.traverse((o) => { if (!o.isMesh && o.children.length > 1) groups.push(o); });
+  for (const grp of groups) {
+    const bins = new Map();
+    for (const c of grp.children) {
+      if (!c.isMesh || keep.has(c) || c.children.length || c.isInstancedMesh || Array.isArray(c.material) || c.material.transparent
+        || Object.keys(c.userData).length || !c.geometry.attributes.normal || !c.visible) continue;
+      const g = c.geometry, attrs = Object.keys(g.attributes).sort().filter((k) => ['position', 'normal', 'uv', 'color'].includes(k));
+      const key = [c.material.uuid, attrs.join('+'), g.index ? 'i' : 'n', c.castShadow ? 1 : 0, c.receiveShadow ? 1 : 0, c.renderOrder].join('|');
+      if (!bins.has(key)) bins.set(key, { attrs, list: [] });
+      bins.get(key).list.push(c);
+    }
+    for (const b of bins.values()) {
+      if (b.list.length < 2) continue;
+      const geos = b.list.map((c) => {
+        c.updateMatrix();
+        const out = new THREE.BufferGeometry();
+        b.attrs.forEach((k) => out.setAttribute(k, c.geometry.attributes[k].clone()));
+        if (c.geometry.index) out.setIndex(c.geometry.index.clone());
+        out.applyMatrix4(c.matrix);
+        if (c.matrix.determinant() < 0 && out.index) { const ix = out.index.array; for (let i = 0; i < ix.length; i += 3) { const t = ix[i + 1]; ix[i + 1] = ix[i + 2]; ix[i + 2] = t; } }
+        return out;
+      });
+      let merged = null;
+      try { merged = mergeGeometries(geos, false); } catch (e) { merged = null; }
+      geos.forEach((q) => q.dispose());
+      if (!merged) continue;
+      const c0 = b.list[0], mesh = new THREE.Mesh(merged, c0.material);
+      mesh.castShadow = c0.castShadow; mesh.receiveShadow = c0.receiveShadow; mesh.renderOrder = c0.renderOrder;
+      grp.add(mesh);
+      b.list.forEach((c) => grp.remove(c));
+    }
+  }
+}
+
+/** Stop recomputing position matrices every frame for parts that never move. three.js redoes the matrix of every
+ *  object, every frame, unless told not to; for a few thousand rocks and leaves that was ~15% of a Chromebook's
+ *  frame. Skipped: anything that animates (userData.anim on it or a parent) and the hunters (they move every frame).
+ *  Whoever moves a frozen object later must call obj.updateMatrix() (and updateMatrixWorld) themselves. */
+PP.freezeStatic = function (obj, self = true) {
+  const go = (o, top) => {
+    if (o.userData.anim || o.userData.pooled || o.userData.handle || o.isCSS2DObject) return;   // moves: leave it and its children live
+    if (!top || self) { o.updateMatrix(); o.matrixAutoUpdate = false; }
+    for (const c of o.children) go(c, false);
+  };
+  go(obj, true);
+  obj.updateMatrixWorld(true);
+};
+
 /** Dispose a group tree (geometries only; materials are shared). */
 PP.disposeTree = function (obj) {
   obj.traverse((o) => {
@@ -3239,7 +3526,7 @@ PP.disposeTree = function (obj) {
     // textures made for one build only (river water etc.) are flagged own: free them, or every rebuild leaks GPU memory
     const mats = Array.isArray(o.material) ? o.material : o.material ? [o.material] : [];
     for (const m of mats) for (const k of ['map', 'bumpMap', 'alphaMap']) { const t = m[k]; if (t && t.userData && t.userData.own) t.dispose(); }
-    if (o.isCSS2DObject && o.element && o.element.parentNode) o.element.parentNode.removeChild(o.element);
+    if (o.isCSS2DObject) { LABELS.delete(o); if (o.element && o.element.parentNode) o.element.parentNode.removeChild(o.element); }
   });
 };
 
@@ -4152,9 +4439,13 @@ function place(scene, homePos, target, J, camera) {
       ray.far = dist - 4;
       return ray.intersectObjects(solid, false).length === 0;
     };
+    // sight-line tests against the whole set are slow on a Chromebook (they froze entering an obstacle for up to
+    // a second): the herd is decoration, so give up after a short budget and leave it hidden for this scene
     let tries = 0;
-    for (let k = 170; k >= 62 && !best && tries < 30; k -= 4) {
+    const t0 = performance.now(), BUDGET = 45;
+    for (let k = 170; k >= 62 && !best && tries < 30 && performance.now() - t0 < BUDGET; k -= 4) {
       for (const lat of lats) {
+        if (performance.now() - t0 > BUDGET) break;
         const p = spot(k, lat), v = p.clone().project(cam);
         if (!(v.z < 1 && v.y > 0.05 && v.y < 0.92 && Math.abs(v.x) < 0.3)) continue;
         tries++;
@@ -4775,11 +5066,49 @@ function dragSizing(ray) {
 
 // --------------------------------------------------------- build/rebuild
 let liveRoot = null;
+// Obstacle scenery (trees, rocks, river banks…) took 50–80 ms to build, far more than the machine itself, and it
+// was rebuilt on every resize step, so each arrow step froze a Chromebook for ~150 ms. Now it is built once and
+// reused while its inputs stay the same: the obstacle, machine, level, the sizes the scenery itself reads (the
+// landslide mound follows the ramp's height), and where the machine sits. While a resize arrow is held, the old
+// scenery is kept even if one of those changed; it is redone once when the arrow is let go.
+let dressCache = null;
+const MERGE_SCENERY = !/[?&]nomerge\b/.test(location.search);   // ?nomerge: draw every scenery piece on its own (for comparing)
+function dropDress() {
+  if (!dressCache) return;
+  dressCache.objs.forEach((o) => { if (o.parent) o.parent.remove(o); PP.releaseHunters(o); PP.disposeTree(o); });
+  dressCache = null;
+}
+function dressSet(J, m) {
+  const c = ctx(), root = m.root;
+  const base = [S.mi, S.tier, S.mode, JX() && JX().id, root.position.toArray().map((v) => v.toFixed(3)).join(','), JSON.stringify(root.userData.slope || null)].join('|');
+  const keyOf = (keys) => base + '|' + keys.map((k) => k + '=' + c.P[k]).join(',');
+  const fresh = dressCache && dressCache.J === J && dressCache.key === keyOf(dressCache.keys);
+  if (dressCache && dressCache.J === J && (fresh || S.sizing)) {
+    dressCache.objs.forEach((o) => root.add(o));
+    if (J.dress.reuse) J.dress.reuse(root, c);       // undo bits of the machine the scenery replaces
+    S.dressStale = !fresh;
+    return;
+  }
+  dropDress();
+  const before = new Set(root.children), keys = new Set();
+  const P = c.P;
+  c.P = new Proxy(P, { get(t, k) { if (typeof k === 'string') keys.add(k); return t[k]; } });
+  try { J.dress(root, c); } finally { c.P = P; }
+  const objs = root.children.filter((o) => !before.has(o));
+  // below Full graphics, plants that only sway a few degrees hold still so they can be merged with the rest
+  if (PP.qualityLevel && PP.qualityLevel() >= 1) objs.forEach((o) => o.traverse((q) => { if (q.userData.sway) { delete q.userData.anim; delete q.userData.sway; q.rotation.set(0, q.rotation.y, 0); } }));
+  if (MERGE_SCENERY) objs.forEach((o) => { if (!o.isMesh) { try { PP.mergeStatic(o); } catch (e) { console.warn('merge', e); } } });
+  objs.forEach((o) => PP.freezeStatic(o));
+  dressCache = { J, keys: [...keys], objs };
+  dressCache.key = keyOf(dressCache.keys);
+  S.dressStale = false;
+}
 let faunaSet = {};
 function rebuild(keepCam) {
   $('#blurb').hidden = !!JX();   // at an obstacle the lesson already covers the machine; keep the scene clear
   const m = M();
-  if (liveRoot) { scene.remove(liveRoot); PP.disposeTree(liveRoot); liveRoot = null; }
+  // the obstacle's scenery is kept aside (not freed) so the next build can reuse it
+  if (liveRoot) { if (dressCache) dressCache.objs.forEach((o) => liveRoot.remove(o)); scene.remove(liveRoot); PP.releaseHunters(liveRoot); PP.disposeTree(liveRoot); liveRoot = null; }
   PP.dims = [];
   S.flags[m.id] = {};          // a new set-up has to prove itself again
   S.drops = [];
@@ -4796,8 +5125,9 @@ function rebuild(keepCam) {
   ['woods', 'grass', 'flowers'].forEach((nm) => { const o = scene.getObjectByName(nm); if (o) o.visible = !(J && J.bare); });
   { const w = scene.getObjectByName('woods'); if (w && J && J.noWoods) w.visible = false; }   // the jungle obstacle swaps the pines for its own trees
   { const gr = scene.getObjectByName('ground'); if (gr) gr.visible = !(J && J.noGround); }
-  { const mt = scene.getObjectByName('mountains'); if (mt) mt.position.y = (J && J.mountainsY) || 0; }   // a valley stop sinks the ring to its floor
-  if (J && J.dress) { try { J.dress(m.root, ctx()); } catch (e) { console.warn('dress', e); } }
+  { const mt = scene.getObjectByName('mountains'); if (mt) { mt.position.y = (J && J.mountainsY) || 0; mt.updateMatrix(); mt.updateMatrixWorld(true); } }   // a valley stop sinks the ring to its floor
+  if (J && J.dress) { try { dressSet(J, m); } catch (e) { console.warn('dress', e); } }
+  else dropDress();
   // scenery that moves on its own (a pacing sabertooth, dripping water…): userData.anim(t, dt, obj, progress)
   S.anims = [];
   m.root.traverse((o) => { if (o.userData.anim) S.anims.push(o); });
@@ -4823,6 +5153,20 @@ function rebuild(keepCam) {
     PP.fauna.place(scene, homePos(), homeTarget(), J, camera);
   }
   PP.addBumps(scene);    // bark, rock, dirt and fur get surface relief (new materials only; cheap after the first time)
+  // the machine's own root never moves once built, so it needn't force every child's matrix to be redone each frame
+  m.root.updateMatrix(); m.root.matrixAutoUpdate = false; m.root.updateMatrixWorld(true);
+  freezeWorld();
+  if (!S.sizing) PP.pruneLogCache(scene);   // not mid-drag: the shapes just left behind may be needed again a step later
+  if (PP.reapplyQuality) PP.reapplyQuality();   // a new set brings its grass, litter and animals back: keep Fast mode's choices
+}
+// The scene itself and the big still backdrops (hills, forest, ground, camp) are frozen once: with the scene's own
+// matrix live, three.js re-multiplied every object's matrix every frame.
+let worldFrozen = false;
+function freezeWorld() {
+  if (worldFrozen) return;
+  worldFrozen = true;
+  scene.updateMatrix(); scene.matrixAutoUpdate = false;
+  ['woods', 'mountains', 'ground', 'camp'].forEach((nm) => { const o = scene.getObjectByName(nm); if (o) PP.freezeStatic(o); });
 }
 // ------------------------------------------------- ground clutter
 // Pebbles, twigs, leaf litter (and sun-bleached bones out in the desert) dropped onto whatever ground the set has,
@@ -4855,7 +5199,7 @@ function scatterClutter(holes) {
   const cands = [], bx = new THREE.Box3();
   m.root.updateMatrixWorld(true);
   m.root.traverseVisible((o) => {
-    if (!o.isMesh || o.isInstancedMesh || o.userData.noGrass || !o.geometry || Array.isArray(o.material) || o.material.transparent) return;
+    if (!o.isMesh || o.isInstancedMesh || o.userData.noGrass || o.userData.merged || !o.geometry || Array.isArray(o.material) || o.material.transparent) return;
     if (!o.geometry.boundingBox) o.geometry.computeBoundingBox();
     bx.copy(o.geometry.boundingBox).applyMatrix4(o.matrixWorld);
     if (bx.max.x - bx.min.x > 12 && bx.max.z - bx.min.z > 12) cands.push(o);
@@ -4864,7 +5208,49 @@ function scatterClutter(holes) {
   const C = homeTarget();
   const desert = !!(J && J.bare);
   const jungle = !!(J && J.noWoods);
-  const down = V(0, -1, 0), from = V(), nrm = V();
+  // Dropping ~500 bits of litter by raycasting each one against the whole terrain (tens of thousands of triangles)
+  // froze a Chromebook for 1–3 s on entering an obstacle. Instead the terrain's upward-facing triangles near the
+  // machine are sorted once into a 1 ft grid, and each drop only tests the few triangles in its own cell.
+  const R0 = 28, CELL = 1, NC = Math.ceil((2 * R0) / CELL), cells = new Array(NC * NC);
+  const gx0 = C.x - R0, gz0 = C.z - R0;
+  const va = V(), vb = V(), vc = V(), e1 = V(), e2 = V(), fn = V();
+  cands.forEach((o) => {
+    const pos = o.geometry.attributes.position, idx = o.geometry.index, mw = o.matrixWorld;
+    const both = o.material.side === THREE.DoubleSide;
+    const n = idx ? idx.count : pos.count;
+    for (let t = 0; t < n; t += 3) {
+      const ia = idx ? idx.getX(t) : t, ib = idx ? idx.getX(t + 1) : t + 1, ic = idx ? idx.getX(t + 2) : t + 2;
+      va.fromBufferAttribute(pos, ia).applyMatrix4(mw); vb.fromBufferAttribute(pos, ib).applyMatrix4(mw); vc.fromBufferAttribute(pos, ic).applyMatrix4(mw);
+      const minX = Math.min(va.x, vb.x, vc.x), maxX = Math.max(va.x, vb.x, vc.x), minZ = Math.min(va.z, vb.z, vc.z), maxZ = Math.max(va.z, vb.z, vc.z);
+      if (maxX < gx0 || minX > gx0 + 2 * R0 || maxZ < gz0 || minZ > gz0 + 2 * R0) continue;
+      fn.crossVectors(e1.subVectors(vc, vb), e2.subVectors(va, vb));   // three.js face normal winding
+      if (fn.lengthSq() < 1e-12) continue;
+      fn.normalize();
+      if (fn.y <= 0) { if (!both) continue; fn.negate(); }                // a downward ray only hits faces looking up
+      const tri = [va.x, va.y, va.z, vb.x, vb.y, vb.z, vc.x, vc.y, vc.z, fn.y];
+      const cx0 = Math.max(0, Math.floor((minX - gx0) / CELL)), cx1 = Math.min(NC - 1, Math.floor((maxX - gx0) / CELL));
+      const cz0 = Math.max(0, Math.floor((minZ - gz0) / CELL)), cz1 = Math.min(NC - 1, Math.floor((maxZ - gz0) / CELL));
+      for (let cz = cz0; cz <= cz1; cz++) for (let cx = cx0; cx <= cx1; cx++) (cells[cz * NC + cx] || (cells[cz * NC + cx] = [])).push(tri);
+    }
+  });
+  /** The highest terrain point straight below (x, z): { y, ny } (ny = how upward its face points), or null. */
+  const dropAt = (x, z) => {
+    const cx = Math.floor((x - gx0) / CELL), cz = Math.floor((z - gz0) / CELL);
+    if (cx < 0 || cz < 0 || cx >= NC || cz >= NC) return null;
+    const list = cells[cz * NC + cx];
+    if (!list) return null;
+    let best = null;
+    for (const T of list) {
+      const x0 = T[0], z0 = T[2], x1 = T[3], z1 = T[5], x2 = T[6], z2 = T[8];
+      const d = (z1 - z2) * (x0 - x2) + (x2 - x1) * (z0 - z2);
+      if (Math.abs(d) < 1e-12) continue;
+      const l0 = ((z1 - z2) * (x - x2) + (x2 - x1) * (z - z2)) / d, l1 = ((z2 - z0) * (x - x2) + (x0 - x2) * (z - z2)) / d, l2 = 1 - l0 - l1;
+      if (l0 < -1e-6 || l1 < -1e-6 || l2 < -1e-6) continue;
+      const y = l0 * T[1] + l1 * T[4] + l2 * T[7];
+      if (!best || y > best.y) best = { y, ny: T[9] };
+    }
+    return best;
+  };
   const spot = () => {
     for (let tries = 0; tries < 6; tries++) {
       const a = rnd() * Math.PI * 2, r = 2.5 + Math.pow(rnd(), 1.25) * 24;
@@ -4876,11 +5262,9 @@ function scatterClutter(holes) {
         if (Math.abs(gx) < 0.4 && Math.abs(gz) < 0.4) { y = g0; ok = true; }
       }
       if (cands.length) {
-        clRay.set(from.set(x, 400, z), down);
-        const hit = clRay.intersectObjects(cands, false)[0];
-        if (hit && hit.point.y > y - 0.05) {
-          nrm.copy(hit.face.normal).transformDirection(hit.object.matrixWorld);
-          if (nrm.y > 0.78) { y = hit.point.y; ok = true; } else ok = false;
+        const hit = dropAt(x, z);
+        if (hit && hit.y > y - 0.05) {
+          if (hit.ny > 0.78) { y = hit.y; ok = true; } else ok = false;
         }
       }
       if (ok) return V(x, y, z);
@@ -5055,7 +5439,7 @@ world.onDrag = (handle, ray) => {
   if (low && np != null) np = 1 - np;
   if (np != null && isFinite(np)) tryMove(np);
 };
-world.onRelease = () => { S.sizing = null; S.dragOff = 0; };
+world.onRelease = () => { S.sizing = null; S.dragOff = 0; if (S.dressStale) S.needRebuild = true; };   // scenery kept during the drag catches up
 world.onUserCamera = () => { stopSpin(); endIntro(); };
 
 // ----------------------------------------------------------- build mode
@@ -5401,7 +5785,7 @@ function onParamChange(isSelect) {
   resetSolve();
   syncSpecs();
   S.needRebuild = true;
-  if (isSelect) renderSpecs();
+  if (isSelect) { renderSpecs(); renderGraphShell(); }   // a choice can add or remove the sizes there are to graph
   renderLog();
 }
 function resetSolve() {
@@ -5624,7 +6008,8 @@ function renderHUD() {
   const nGot = list.filter((q) => got[q.id]).length;
   const goalText = J ? J.goal : GOALS[id];
   const goal = goalText ? `<div class="goal">🎯 <b>${J ? esc(J.short || 'Goal') + ':' : 'Goal:'}</b> ${esc(goalText)}</div>` : '';
-  const html = `${goal}${missionSteps(c, over, ex)}
+  const mini = `<div class="hudmini ${over ? 'no' : 'ok'}">${over ? '✖ Too heavy' : '✔ Strong enough'} · ${ex ? 'needs' : 'effort'} ${fmt(c.effort, ex ? 0 : 1)} lb / ${T.strength} lb</div>`;
+  const html = `${mini}${goal}${missionSteps(c, over, ex)}
     <h4>${ex ? 'Strong enough?' : 'Effort check'}</h4>
     <div class="meter"><div class="lbl"><span>${ex ? 'Push needed' : 'Effort needed'}</span><span>${fmt(c.effort, ex ? 0 : 1)} lb</span></div>
       <div class="bar"><div class="fill need ${over ? 'over' : ''}" style="width:${(100 * c.effort) / mx}%"></div></div></div>
@@ -5642,6 +6027,69 @@ function renderHUD() {
     const d = $('#hudBody details.chal');
     if (d) d.addEventListener('toggle', () => { S.chOpen = d.open; });
   }
+}
+// ------------------------------------------------- side panels: fold and resize
+// The mission panel sits at the top of the side bar and stays put while the rest scrolls, so when it grew tall it
+// buried Machine specs and the Engineering Log. It can now be folded to a one-line summary (▴/▾) or made taller
+// or shorter with the grip on its bottom edge; Machine specs and the Log fold by tapping their titles.
+// Each choice is remembered on this device.
+{
+  const hud = $('#hud'), body = $('#hudBody'), fold = $('#hudFold'), grip = $('#hudGrip');
+  const setMin = (on) => {
+    hud.classList.toggle('min', on);
+    fold.textContent = on ? '▾' : '▴';
+    fold.setAttribute('aria-expanded', String(!on));
+    fold.setAttribute('aria-label', on ? 'Show the whole mission panel' : 'Hide the mission panel');
+    store.set('hudMin', on);
+  };
+  setMin(!!store.get('hudMin', false));
+  fold.addEventListener('click', () => setMin(!hud.classList.contains('min')));
+  const setH = (h) => {
+    if (h == null) { body.style.maxHeight = ''; return; }
+    body.style.maxHeight = Math.round(h) + 'px';
+  };
+  setH(store.get('hudH', null));
+  let drag = null;
+  grip.addEventListener('pointerdown', (e) => {
+    if (hud.classList.contains('min')) setMin(false);
+    drag = { y: e.clientY, h: body.getBoundingClientRect().height / (parseFloat(getComputedStyle(hud).zoom) || 1) };
+    grip.setPointerCapture(e.pointerId);
+    hud.classList.add('sizing');
+    e.preventDefault();
+  });
+  grip.addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    const z = parseFloat(getComputedStyle(hud).zoom) || 1;
+    const h = PP.clamp(drag.h + (e.clientY - drag.y) / z, 60, Math.max(120, innerHeight * 0.8 / z));
+    setH(h);
+  });
+  const end = () => {
+    if (!drag) return;
+    drag = null; hud.classList.remove('sizing');
+    const h = parseFloat(body.style.maxHeight);
+    if (h && h >= body.scrollHeight - 2) { setH(null); store.set('hudH', null); }   // pulled past its full size: no limit
+    else store.set('hudH', h || null);
+  };
+  grip.addEventListener('pointerup', end);
+  grip.addEventListener('pointercancel', end);
+  grip.addEventListener('dblclick', () => { setH(null); store.set('hudH', null); });   // double-click: back to full size
+  grip.addEventListener('keydown', (e) => {         // keyboard: arrow keys resize
+    if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+    const cur = body.getBoundingClientRect().height / (parseFloat(getComputedStyle(hud).zoom) || 1);
+    setH(PP.clamp(cur + (e.key === 'ArrowDown' ? 30 : -30), 60, innerHeight)); store.set('hudH', parseFloat(body.style.maxHeight));
+    e.preventDefault();
+  });
+  grip.tabIndex = 0;
+  // Machine specs and the Engineering Log fold from their titles
+  const folded = store.get('folded', {}) || {};
+  ['specs', 'log'].forEach((id) => { if (folded[id]) $('#' + id).classList.add('folded'); });
+  $('#side').addEventListener('click', (e) => {
+    const h = e.target.closest('#specs > h3, #log > h3');
+    if (!h || e.target.closest('button, a, input, select, label')) return;
+    const sec = h.parentElement, on = !sec.classList.contains('folded');
+    sec.classList.toggle('folded', on);
+    folded[sec.id] = on; store.set('folded', folded);
+  });
 }
 function renderStatus() {
   const el = $('#status');
@@ -6064,24 +6512,49 @@ function weakGPU() {
     return /Intel|Mali|Adreno|PowerVR|SwiftShader|llvmpipe|Software|Microsoft Basic/i.test(name);
   } catch (e) { return false; }
 }
+// Graphics setting (Help box): Auto adapts to the device, Fast is the lightest look, Full never steps down.
+// Levels: 0 full · 1 sharp-screen pixels off · 2 shadows off · 3 a third of the grass · 4 fast: no grass, flowers,
+// ground litter, far animals or surface bumps, and the 3D picture drawn at 75% resolution (labels and panels stay sharp).
+// Chromebooks and phones start at 2 (no shadows), other low-power graphics at 1; Auto keeps stepping down while
+// the game runs slowly or hitches.
+const isChromebook = /CrOS|Android/i.test(navigator.userAgent);
+let gfxMode = store.get('gfx', 'auto');
+if (!['auto', 'fast', 'full'].includes(gfxMode)) gfxMode = 'auto';
 const savedQ = store.get('quality', null);
-const PERF = { lvl: PP.clamp(savedQ != null ? +savedQ || 0 : weakGPU() ? 1 : 0, 0, 3), sum: 0, n: 0, slow: 0, warm: 3 };
+const autoStart = isChromebook ? 2 : weakGPU() ? 1 : 0;
+const PERF = { lvl: gfxMode === 'fast' ? 4 : gfxMode === 'full' ? 0 : PP.clamp(savedQ != null ? Math.max(+savedQ || 0, autoStart) : autoStart, 0, 4), sum: 0, n: 0, slow: 0, warm: 3 };
+function setBumps(on) {
+  PP.noBumps = !on;
+  scene.traverse((o) => {
+    if (!o.isMesh || !o.material) return;
+    (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => {
+      if (!on && m.bumpMap) { m.userData.bumpSaved = m.bumpMap; m.bumpMap = null; m.needsUpdate = true; }
+      else if (on && m.userData.bumpSaved && !m.bumpMap) { m.bumpMap = m.userData.bumpSaved; m.userData.bumpSaved = null; m.needsUpdate = true; }
+    });
+  });
+}
 function applyQuality(l) {
   const r = world.renderer;
-  const pr = Math.min(window.devicePixelRatio || 1, l >= 1 ? 1 : 2);
+  const pr = l >= 4 ? 0.75 : Math.min(window.devicePixelRatio || 1, l >= 1 ? 1 : 2);
   if (r.getPixelRatio() !== pr) { r.setPixelRatio(pr); r.setSize(r.domElement.clientWidth, r.domElement.clientHeight, false); }
   world.sun.castShadow = l < 2;
   ['grass', 'flowers'].forEach((nm) => {
     const o = scene.getObjectByName(nm);
     if (!o || !o.isInstancedMesh) return;
     if (o.userData.full == null) o.userData.full = o.count;
-    o.count = l >= 3 ? Math.floor(o.userData.full / 3) : o.userData.full;
+    o.count = l >= 4 ? 0 : l >= 3 ? Math.floor(o.userData.full / 3) : o.userData.full;
+    o.visible = l < 4;
   });
+  ['clutter', 'fauna'].forEach((nm) => { const o = scene.getObjectByName(nm); if (o) o.visible = l < 4; });
+  if ((l >= 4) !== !!PP.noBumps) setBumps(l < 4);
   const note = $('#qualityNote');
-  if (note) note.hidden = !l;
+  if (note) note.hidden = !(gfxMode === 'auto' && l > autoStart);
+  document.querySelectorAll('#gfxPick button').forEach((b) => b.classList.toggle('on', b.dataset.g === gfxMode));
 }
+PP.qualityLevel = () => PERF.lvl;
+PP.reapplyQuality = () => applyQuality(PERF.lvl);
 function watchSpeed(raw) {
-  if (PERF.lvl >= 3 || document.visibilityState !== 'visible' || raw > 250) return;   // ignore pauses and hidden tabs
+  if (gfxMode !== 'auto' || PERF.lvl >= 4 || document.visibilityState !== 'visible' || raw > 250) return;   // ignore pauses and hidden tabs
   if (PERF.warm > 0) { PERF.warm -= raw / 1000; return; }                              // let shaders compile first
   PERF.sum += raw; PERF.n++;
   if (raw > 45) PERF.slow++;                                                           // hitches count too, not just the average
@@ -6095,15 +6568,30 @@ function watchSpeed(raw) {
     PERF.warm = 2;
   }
 }
+function setGfx(mode) {
+  gfxMode = mode;
+  store.set('gfx', mode);
+  PERF.lvl = mode === 'fast' ? 4 : mode === 'full' ? 0 : autoStart;
+  if (mode === 'auto') store.set('quality', autoStart);
+  PERF.warm = 3; PERF.sum = 0; PERF.n = 0; PERF.slow = 0;
+  applyQuality(PERF.lvl);
+}
 {
   const card = $('#help .modal-card');
   if (card) {
-    const p = document.createElement('p');
-    p.id = 'qualityNote';
-    p.className = 'muted';
-    p.innerHTML = '🐢 Graphics were simplified to keep this device running smoothly. <button class="linkish" id="qualityReset">Use full graphics</button>';
-    card.insertBefore(p, $('#helpClose'));
-    $('#qualityReset').addEventListener('click', () => { PERF.lvl = 0; store.set('quality', 0); applyQuality(0); PERF.warm = 3; });
+    const box = document.createElement('div');
+    box.className = 'gfx';
+    box.innerHTML = `<b>🖥️ Graphics</b>
+      <div id="gfxPick" class="seg" role="group" aria-label="Graphics">
+        <button data-g="auto" title="Adjusts to this computer">Auto</button>
+        <button data-g="fast" title="Smoothest: simpler scenery, no shadows">⚡ Fast</button>
+        <button data-g="full" title="Every detail (needs a strong computer)">✨ Full</button>
+      </div>
+      <span class="muted">Choppy or laggy? Pick <b>⚡ Fast</b>.</span>
+      <p id="qualityNote" class="muted" hidden>🐢 Auto already simplified the graphics to keep this device running smoothly.</p>`;
+    const h2 = card.querySelector('h2');
+    card.insertBefore(box, h2 ? h2.nextSibling : card.firstChild);   // first thing in Help, where a teacher looks
+    box.querySelectorAll('#gfxPick button').forEach((b) => b.addEventListener('click', () => setGfx(b.dataset.g)));
   }
 }
 applyQuality(PERF.lvl);
@@ -6263,7 +6751,7 @@ function update(dt) {
   world.draw(scene, camera, dofBlur(rdt), focusDist());
   if (ldScale) ld.scale.copy(ldScale);
   if (ldOff) ld.position.sub(ldOff);
-  world.labels.render(scene, camera);
+  renderLabels();
   declutterLabels(dt);
   camera.position.sub(sh);
   renderInset();
@@ -6271,6 +6759,21 @@ function update(dt) {
   drawGraph();
   renderHUD();
   renderStatus();
+}
+// The label renderer normally walks the entire scene twice a frame looking for labels (~20% of a slow laptop's
+// frame). Hand it a stand-in "scene" holding only the labels that are really in the scene; any label that isn't
+// (scenery kept aside between builds, a hunter waiting in the pool) is hidden.
+const LBL_SCENE = { children: [], matrixWorldAutoUpdate: false, traverse(f) { this.children.forEach(f); } };
+function renderLabels() {
+  const list = LBL_SCENE.children;
+  list.length = 0;
+  for (const o of PP.labels) {
+    let q = o;
+    while (q.parent) q = q.parent;
+    if (q === scene) list.push(o);
+    else if (o.element.style.display !== 'none') o.element.style.display = 'none';
+  }
+  world.labels.render(LBL_SCENE, camera);
 }
 /** Close-ups get a camera's shallow focus: the machine stays sharp, the far hills (and anything very near) go soft. */
 function dofBlur(dt) {
@@ -6289,11 +6792,24 @@ function focusDist() {
 }
 /** Labels that land on top of each other get nudged apart (smoothly, so nothing jitters). */
 const labelOff = new WeakMap();
+// Measuring labels (getBoundingClientRect) makes the browser lay out the whole page, which cost a slow laptop
+// ~50 ms a frame. With one label or none there is nothing to untangle; otherwise labels are measured about 12
+// times a second, and in between each keeps the nudge it was last given (the renderer resets transforms every frame).
+const labelExtra = new Map();
+let declT = 0;
 function declutterLabels(dt) {
   const layer = world.labels.domElement;
+  const live = [];
+  for (const el of layer.children) if (el.style.display !== 'none' && (el.firstChild || el.textContent)) live.push(el);
+  if (!live.length || (live.length < 2 && innerWidth > 700)) { labelExtra.clear(); return; }   // phones still slide a lone label back on screen
+  declT -= dt;
+  if (declT > 0) { live.forEach((el) => { const x = labelExtra.get(el); if (x) el.style.transform += x; }); return; }
+  declT = 0.08;
+  labelExtra.clear();
+  const before = new Map(live.map((el) => [el, el.style.transform]));
+  dt = Math.max(dt, 0.08);
   const els = [];
-  for (const el of layer.children) {
-    if (el.style.display === 'none' || !el.firstChild && !el.textContent) continue;
+  for (const el of live) {
     const r = el.getBoundingClientRect();
     if (!r.width || r.right < 0 || r.bottom < 0) continue;
     const cls = el.className || '';
@@ -6326,6 +6842,7 @@ function declutterLabels(dt) {
     if (Math.abs(sm) >= 0.3) e.el.style.transform += ` translateY(${sm.toFixed(1)}px)`;
     placed.push({ l: e.l, r: e.r, t: e.t + off, b: e.b + off });
   });
+  for (const el of live) { const b = before.get(el), now = el.style.transform; if (now !== b && now.startsWith(b)) labelExtra.set(el, now.slice(b.length)); }
 }
 function placeArrow(a, info, force, text) {
   if (!info || !S.showForces || S.building) { a.visible = false; return; }
@@ -6366,7 +6883,8 @@ function graphKey() {
 }
 function renderGraphShell() {
   const el = $('#graph');
-  el.hidden = !G.on || S.building;
+  // nothing with a size to plot (e.g. a sled in the desert has only choices): no empty box over the scene
+  el.hidden = !G.on || S.building || !graphParams().length;
   document.body.classList.toggle('graphOn', !el.hidden);
   $('#tGraph').classList.toggle('on', G.on);
   if (el.hidden) return;
@@ -6524,6 +7042,7 @@ function setGraph(on) {
 }
 $('#tGraph').addEventListener('click', () => {
   if (S.building) { setGraph(true); flash('hint', '📈 The graph opens as soon as the machine is built!'); return; }
+  if (!G.on && !graphParams().length) { flash('hint', '📈 Nothing to graph yet: this set-up has no sizes to change. Try a different choice in Machine specs.'); return; }
   setGraph(!G.on);
 });
 $('#gClose').addEventListener('click', () => setGraph(false));
